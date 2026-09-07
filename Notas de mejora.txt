@@ -1,5 +1,0 @@
-1- Al inicio, cuando pregunte, cuanto es el peso que quiero perder, que me indique en cuanto tiempo lo puedo perder, considerando el ejercicio y la dieta saludable.
-2- En el módulo de "Mi plan" elimine "La rutina propuesta" ya que los ejercicios se verán en el módulo "Ejercicios".
-3- Quiero que los ejercicios se muestren por día o por semana; por ejemplo: DÍA 1 ESPALDA Y PECHO (y que muestre la sugerencia de ejercicios) o por SEMANA, ejemplo: SEMANA 1 (DÍA LUNES: GLUTEOS Y PIERNAS, DÍA MARTES: HOMBRO Y BICEPS) etc. No importa si es por día o por semana.
-4- Quiero que se cree una nuevo módulo que se llame "Dieta" y que aquí se muestre el menu por día, para que genere un registro por día de los alimentos y ejercicios que voy haciendo. Podría tener la opción de "seleccionar" el desayuno, comida o cena que elegí el lunes y guardarlo; que aplique lo mismo para los días siguientes para que esa información se vaya registrando en el histórico.
-5- Lo que pretendo hacer es cambiar el módulo de "Mi plan" y dividirlo para tener los módulos de "Ejercicios" (que ya existe) y "Dieta" (que no existe).
