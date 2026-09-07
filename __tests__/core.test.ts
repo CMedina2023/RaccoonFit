@@ -1,4 +1,5 @@
 import { calculateBmi } from '../src/core/bmiCalculator';
+import { calculateCalorieNeeds } from '../src/core/calorieCalculator';
 import { compareTwoMonths, MonthSummary } from '../src/core/historyAnalytics';
 import { generateAutomatedPlan, checkPlanExpiration } from '../src/core/planEngine';
 import { UserProfile } from '../src/types';
@@ -89,5 +90,28 @@ describe('3. Comparador Inter-Mensual de Histórico (Peso e Hidratación)', () =
     const comparison = compareTwoMonths(monthA, monthB);
     expect(comparison.waterDiffAvg).toBe(0.8);
     expect(comparison.insightPetText).toContain('agua');
+  });
+});
+
+describe('4. Motor Científico de Cálculo Calórico (Mifflin-St Jeor)', () => {
+  test('Calcula TMB, TDEE y déficit de pérdida de grasa para hombre', () => {
+    // Hombre: 80kg, 175cm, 30 años -> BMR = 10*80 + 6.25*175 - 5*30 + 5 = 800 + 1093.75 - 150 + 5 = 1749
+    // Sedentario: 1749 * 1.2 = 2099 TDEE
+    // Fat loss (-20%): 2099 - 420 = 1679 -> ajustado con piso en BMR = 1749
+    const analysis = calculateCalorieNeeds(80, 175, 30, 'male', 'sedentary', 'fat_loss');
+    expect(analysis.bmr).toBe(1749);
+    expect(analysis.tdee).toBe(2099);
+    expect(analysis.targetCalories).toBe(1749);
+    expect(analysis.proteinGrams).toBeGreaterThan(140);
+    expect(analysis.fatsGrams).toBeGreaterThan(40);
+  });
+
+  test('Calcula TMB y requerimiento calórico para mujer', () => {
+    // Mujer: 60kg, 162cm, 28 años -> BMR = 10*60 + 6.25*162 - 5*28 - 161 = 600 + 1012.5 - 140 - 161 = 1312
+    // Ligero: 1312 * 1.375 = 1804
+    const analysis = calculateCalorieNeeds(60, 162, 28, 'female', 'light', 'fat_loss');
+    expect(analysis.bmr).toBe(1312);
+    expect(analysis.tdee).toBe(1804);
+    expect(analysis.targetCalories).toBe(1443);
   });
 });

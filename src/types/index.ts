@@ -1,3 +1,16 @@
+export type FitnessGoal = 'fat_loss' | 'muscle_gain' | 'maintain_weight' | 'stress_relief';
+export type TargetZone = 'arms' | 'abs' | 'glutes' | 'legs' | 'full_body';
+export type ApproachType = 'nutrition_plan' | 'calorie_tracking';
+export type ObstacleType =
+  | 'cravings'
+  | 'inconsistency'
+  | 'lack_of_time'
+  | 'anxiety_eating'
+  | 'social_events'
+  | 'dont_know_what_to_eat';
+
+export type DietaryPreference = 'balanced' | 'pescatarian' | 'vegetarian' | 'vegan';
+
 export interface UserProfile {
   name: string;
   gender: 'male' | 'female';
@@ -9,6 +22,11 @@ export interface UserProfile {
   preferredRoutineMinutes: 20 | 30 | 60;
   weighInDayOfWeek: number; // 0 = Domingo, 5 = Viernes, etc.
   createdAt: string;
+  fitnessGoal?: FitnessGoal;
+  focusZones?: TargetZone[];
+  approachType?: ApproachType;
+  obstacles?: ObstacleType[];
+  dietaryPreference?: DietaryPreference;
 }
 
 export interface WeeklyWeighIn {
