@@ -340,6 +340,47 @@ export const RECIPES_CATALOG: RecipeItem[] = [
     approxCalories: 315,
     approxProteinGrams: 16,
   },
+  {
+    id: 'rec_des_9',
+    title: 'Tazón de Avena con Plátano, Cacahuates y Canela',
+    mealType: 'breakfast',
+    prepTimeMinutes: 7,
+    isBudgetFriendly: true,
+    ingredients: [
+      '5 cucharadas de hojuelas de avena',
+      '1 taza de agua tibia o infusión de canela',
+      '1/2 plátano rebanado',
+      '1 cucharada de cacahuates tostados sin sal',
+      'Canela en polvo al gusto',
+    ],
+    instructions: [
+      'Cocina la avena con el agua y una pizca de canela a fuego medio durante 3 minutos.',
+      'Sirve caliente en un tazón.',
+      'Agrega el plátano en rodajas y los cacahuates para un aporte crujiente y energético.',
+    ],
+    approxCalories: 290,
+    approxProteinGrams: 11,
+  },
+  {
+    id: 'rec_des_10',
+    title: 'Tostadas de Frijol Negro con Aguacate y Pico de Gallo',
+    mealType: 'breakfast',
+    prepTimeMinutes: 6,
+    isBudgetFriendly: true,
+    ingredients: [
+      '2 tostadas de maíz horneadas sin grasa',
+      '1/2 taza de frijoles negros machacados',
+      '1/4 de aguacate rebanado',
+      'Pico de gallo fresco (jitomate, cebolla y cilantro)',
+    ],
+    instructions: [
+      'Unta los frijoles negros calientes sobre las dos tostadas.',
+      'Coloca rebanadas de aguacate encima.',
+      'Corona con abundante pico de gallo y unas gotas de limón.',
+    ],
+    approxCalories: 280,
+    approxProteinGrams: 10,
+  },
 
   // 2. COMIDAS / ALMUERZOS
   {
@@ -504,6 +545,48 @@ export const RECIPES_CATALOG: RecipeItem[] = [
     approxCalories: 370,
     approxProteinGrams: 33,
   },
+  {
+    id: 'rec_com_9',
+    title: 'Sopa de Lentejas Caseras con Verduras y Tortillas',
+    mealType: 'lunch',
+    prepTimeMinutes: 18,
+    isBudgetFriendly: true,
+    ingredients: [
+      '1 taza y media de lentejas cocidas en su caldo',
+      '1 zanahoria y 1 calabacita picadas en cubitos',
+      '1 jitomate licuado con ajo y cebolla',
+      '2 tortillas de maíz calientes',
+    ],
+    instructions: [
+      'Sofríe el recaudo de jitomate con una pizca de orégano.',
+      'Agrega las lentejas con su caldo, la zanahoria y la calabacita.',
+      'Hierve 8 minutos hasta que los vegetales estén suaves.',
+      'Sirve caliente acompañado de las tortillas y limón al gusto.',
+    ],
+    approxCalories: 350,
+    approxProteinGrams: 20,
+  },
+  {
+    id: 'rec_com_10',
+    title: 'Tacos de Champiñones al Ajillo con Frijoles de la Olla',
+    mealType: 'lunch',
+    prepTimeMinutes: 12,
+    isBudgetFriendly: true,
+    ingredients: [
+      '1 taza y media de champiñones rebanados',
+      '1 diente de ajo picado y 1 chile guajillo en aros',
+      '1 cucharadita de aceite',
+      '2 tortillas de maíz',
+      '1/2 taza de frijoles de la olla calientes',
+    ],
+    instructions: [
+      'Saltea el ajo y chile guajillo en sartén con la cucharadita de aceite por 30 segundos.',
+      'Agrega los champiñones con sal al gusto y cocina a fuego alto por 4 minutos.',
+      'Sirve en tacos sobre las tortillas calientes con los frijoles de la olla.',
+    ],
+    approxCalories: 320,
+    approxProteinGrams: 14,
+  },
 
   // 3. CENAS
   {
@@ -662,6 +745,47 @@ export const RECIPES_CATALOG: RecipeItem[] = [
     approxCalories: 245,
     approxProteinGrams: 23,
   },
+  {
+    id: 'rec_cen_9',
+    title: 'Ensalada Completa de Garbanzos con Nopales y Limón',
+    mealType: 'dinner',
+    prepTimeMinutes: 7,
+    isBudgetFriendly: true,
+    ingredients: [
+      '1 taza de garbanzos cocidos escurridos',
+      '1 taza de nopales cocidos en cubos',
+      '1 jitomate picado y cilantro fresco',
+      '1/4 de aguacate en cubos',
+      'Jugo de limón y sal al gusto',
+    ],
+    instructions: [
+      'Mezcla en un tazón los garbanzos, nopales, jitomate y cilantro.',
+      'Agrega el aguacate en cubos.',
+      'Adereza con abundante jugo de limón, sal y orégano molido.',
+    ],
+    approxCalories: 260,
+    approxProteinGrams: 13,
+  },
+  {
+    id: 'rec_cen_10',
+    title: 'Sopa Ligera de Frijol de la Olla con Nopales Asados',
+    mealType: 'dinner',
+    prepTimeMinutes: 8,
+    isBudgetFriendly: true,
+    ingredients: [
+      '1 taza de frijoles de la olla calientes con caldo',
+      '1 nopal asado al comal rebanado en tiras',
+      '1 tostada de maíz horneada troceada',
+      'Cilantro picado y cebollita al gusto',
+    ],
+    instructions: [
+      'Sirve los frijoles bien calientes en un tazón hondo.',
+      'Agrega las tiras de nopal asado.',
+      'Espolvorea la tostada troceada encima para dar textura crujiente.',
+    ],
+    approxCalories: 220,
+    approxProteinGrams: 11,
+  },
 
   // 4. SNACKS (CONTROL DE ANSIEDAD)
   {
@@ -785,3 +909,32 @@ export const RECIPES_CATALOG: RecipeItem[] = [
     approxProteinGrams: 10,
   },
 ];
+
+import { DietaryPreference } from '../types';
+
+/**
+ * Filtra recetas del catálogo según la preferencia alimentaria del usuario.
+ * Garantiza opciones 100% vegetarianas, veganas o pescetarianas sin perder variedad económica.
+ */
+export function filterRecipesByDiet(recipes: RecipeItem[], preference?: DietaryPreference): RecipeItem[] {
+  if (!preference || preference === 'balanced') return recipes;
+
+  return recipes.filter((r) => {
+    const text = (r.title + ' ' + r.ingredients.join(' ')).toLowerCase();
+    const hasMeat = text.includes('pollo') || text.includes('pechuga') || /\b(res|carne|pavo|cerdo|cochinita|jamón|salchicha)\b/.test(text);
+    const hasFish = text.includes('atún') || text.includes('pescado') || text.includes('salmón') || text.includes('marisco') || text.includes('camarón');
+    const hasEggDairy = text.includes('huevo') || text.includes('queso') || text.includes('leche') || text.includes('yogur') || text.includes('requesón') || text.includes('panela');
+
+    if (preference === 'pescatarian') {
+      return !hasMeat; // Plantas, pescado, mariscos, huevos y lácteos
+    }
+    if (preference === 'vegetarian') {
+      return !hasMeat && !hasFish; // Plantas, huevos y lácteos
+    }
+    if (preference === 'vegan') {
+      return !hasMeat && !hasFish && !hasEggDairy; // 100% plantas
+    }
+    return true;
+  });
+}
+

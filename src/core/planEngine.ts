@@ -1,6 +1,6 @@
 import { UserProfile, GeneratedPlan, RecipeItem } from '../types';
 import { selectExercisesForPlan } from './exerciseCatalog';
-import { RECIPES_CATALOG } from './catalogs';
+import { RECIPES_CATALOG, filterRecipesByDiet } from './catalogs';
 
 /**
  * RecipeProvider — Dependency Inversion Principle (DIP)
@@ -53,13 +53,20 @@ export function generateAutomatedPlan(
   // Seleccionar ejercicios del nivel correcto (sin mezclar niveles)
   const selectedExercises = selectExercisesForPlan(profile.preferredRoutineMinutes, levelNumeric);
 
-  // DIP: recetas obtenidas a través de la abstracción RecipeProvider
-  const breakfast = recipeProvider.getByMealType('breakfast');
-  const lunch     = recipeProvider.getByMealType('lunch');
-  const dinner    = recipeProvider.getByMealType('dinner');
-  const snack     = recipeProvider.getByMealType('snack');
+  // DIP: recetas obtenidas a través de la abstracción RecipeProvider y filtradas por preferencia alimentaria
+  const pref = profile.dietaryPreference || 'balanced';
+  const filterSlot = (items: RecipeItem[]) => {
+    const filtered = filterRecipesByDiet(items, pref);
+    return filtered.length > 0 ? filtered : items; // Fallback seguro para nunca dejar vacío el menú
+  };
+
+  const breakfast = filterSlot(recipeProvider.getByMealType('breakfast'));
+  const lunch     = filterSlot(recipeProvider.getByMealType('lunch'));
+  const dinner    = filterSlot(recipeProvider.getByMealType('dinner'));
+  const snack     = filterSlot(recipeProvider.getByMealType('snack'));
 
   const levelLabels: Record<1 | 2 | 3, string> = { 1: 'Principiante', 2: 'Intermedio', 3: 'Avanzado' };
+
 
   return {
     id: `plan_${Date.now()}`,

@@ -137,6 +137,7 @@ export const ExercisesScreen: React.FC = () => {
                 {/* Animación del ejercicio */}
                 <ExerciseAnimationPlayer
                   type={selectedExercise.animationType}
+                  gifUrl={selectedExercise.gifUrl}
                   muscleName={selectedExercise.targetMuscle}
                   color={LEVEL_COLORS[selectedExercise.difficulty]}
                 />

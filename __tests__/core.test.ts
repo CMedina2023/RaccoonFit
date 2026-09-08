@@ -48,6 +48,22 @@ describe('2. Generador Automático de Planes Adaptativos', () => {
     expect(plan.selectedMeals.snack.length).toBeGreaterThan(0);
   });
 
+  test('Filtra recetas de acuerdo a la preferencia alimentaria (vegano / vegetariano)', () => {
+    const veganProfile = { ...mockProfile, dietaryPreference: 'vegan' as const };
+    const plan = generateAutomatedPlan(veganProfile);
+    // Verificamos que ninguna comida contenga carne, pollo o pescado
+    const allMeals = [
+      ...plan.selectedMeals.breakfast,
+      ...plan.selectedMeals.lunch,
+      ...plan.selectedMeals.dinner,
+      ...plan.selectedMeals.snack,
+    ];
+    allMeals.forEach((meal) => {
+      const text = (meal.title + ' ' + meal.ingredients.join(' ')).toLowerCase();
+      expect(text).not.toMatch(/\b(pollo|pechuga|res|carne|pavo|cerdo|atún|pescado)\b/);
+    });
+  });
+
   test('Evalúa expiración del plan cuando la fecha concluye', () => {
     const plan = generateAutomatedPlan(mockProfile);
     // Forzamos fecha de fin en el pasado
@@ -115,3 +131,16 @@ describe('4. Motor Científico de Cálculo Calórico (Mifflin-St Jeor)', () => {
     expect(analysis.targetCalories).toBe(1443);
   });
 });
+
+describe('5. Catálogo de Ejercicios y Animaciones 3D (ExerciseDB)', () => {
+  test('Todos los ejercicios del catálogo tienen asignado su gifUrl 3D válido y exerciseDbId', () => {
+    const { EXERCISES_CATALOG } = require('../src/core/exerciseCatalog');
+    expect(EXERCISES_CATALOG.length).toBe(21);
+    EXERCISES_CATALOG.forEach((exercise: any) => {
+      expect(exercise.gifUrl).toBeDefined();
+      expect(exercise.gifUrl).toMatch(/^https:\/\/static\.exercisedb\.dev\/media\/[a-zA-Z0-9_-]+\.gif$/);
+      expect(exercise.exerciseDbId).toBeDefined();
+    });
+  });
+});
+

@@ -62,8 +62,8 @@ const STEPS: Step[] = [
   'calorie_intro',
   'calorie_analysis',
   'progress_projection',
-  'meal_plan_intro',
   'dietary_preference',
+  'meal_plan_intro',
   'focus_areas',
   'target_weight',
   'time',
@@ -84,6 +84,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
   const [approachType, setApproachType] = useState<ApproachType | null>(null);
   const [obstacles, setObstacles] = useState<ObstacleType[]>([]);
   const [dietaryPreference, setDietaryPreference] = useState<DietaryPreference | null>(null);
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [focusZones, setFocusZones] = useState<TargetZone[]>([]);
   const [targetWeightKg, setTargetWeightKg] = useState('');
   const [routineMinutes, setRoutineMinutes] = useState<20 | 30 | 60 | null>(null);
@@ -170,6 +171,8 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       approachType: approachType || 'nutrition_plan',
       obstacles: obstacles.length > 0 ? obstacles : ['inconsistency'],
       focusZones: focusZones.length > 0 ? focusZones : ['full_body'],
+      dietaryPreference: dietaryPreference || 'balanced',
+      remindersEnabled,
     };
     onComplete(profile);
   };
@@ -188,11 +191,23 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       case 'calorie_intro': return true;
       case 'calorie_analysis': return true;
       case 'progress_projection': return true;
+      case 'dietary_preference': return dietaryPreference !== null;
+      case 'meal_plan_intro': return true;
       case 'focus_areas': return focusZones.length > 0;
       case 'target_weight': return parseFloat(targetWeightKg) >= 30 && parseFloat(targetWeightKg) <= 300;
       case 'time': return routineMinutes !== null;
       case 'summary': return true;
       default: return false;
+    }
+  };
+
+  const getDietaryLabel = (d: DietaryPreference | null) => {
+    switch (d) {
+      case 'balanced': return 'Balanceado 🍗';
+      case 'pescatarian': return 'Pescetariano 🐟';
+      case 'vegetarian': return 'Vegetariano 🥚';
+      case 'vegan': return 'Vegano 🥦';
+      default: return 'Balanceado 🍗';
     }
   };
 
@@ -802,6 +817,149 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
             );
           })()}
 
+          {/* PASO: PREFERENCIA ALIMENTARIA (SCREENSHOT 1) */}
+          {step === 'dietary_preference' && (
+            <View style={styles.stepBlock}>
+              <View style={styles.plateIconCircle}>
+                <Text style={styles.plateIconText}>🍽️</Text>
+              </View>
+              <Text style={styles.stepTitle}>¿Cuál es tu preferencia alimentaria?</Text>
+              <Text style={styles.stepSubtitle}>
+                Adaptaremos tus recetas del plan para que se ajusten a tus hábitos y estilo de vida
+              </Text>
+
+              <View style={{ marginTop: 16 }}>
+                {[
+                  {
+                    id: 'balanced',
+                    emoji: '🍗',
+                    title: 'Balanceado',
+                    desc: 'Flexible. Puedes establecer alergias e intolerancias más tarde.',
+                  },
+                  {
+                    id: 'pescatarian',
+                    emoji: '🐟',
+                    title: 'Pescetariano',
+                    desc: 'Plantas, pescado, mariscos, huevos y lácteos. Sin carne.',
+                  },
+                  {
+                    id: 'vegetarian',
+                    emoji: '🥚',
+                    title: 'Vegetariano',
+                    desc: 'Alimentos de origen vegetal, huevos y lácteos. Sin carne ni pescado.',
+                  },
+                  {
+                    id: 'vegan',
+                    emoji: '🥦',
+                    title: 'Vegano',
+                    desc: 'Totalmente basado en plantas sin productos de origen animal.',
+                  },
+                ].map((item) => {
+                  const active = dietaryPreference === item.id;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.dietaryCard, active && styles.dietaryCardActive]}
+                      onPress={() => setDietaryPreference(item.id as DietaryPreference)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.dietaryCardEmoji}>{item.emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.dietaryCardTitle, active && styles.dietaryCardTitleActive]}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.dietaryCardDesc}>{item.desc}</Text>
+                      </View>
+                      <View style={[styles.radioCircleOutline, active && styles.radioCircleOutlineActive]}>
+                        {active && <Text style={styles.radioCheckmarkBlack}>✓</Text>}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* PASO: NO OLVIDES TUS COMIDAS / RECORDATORIOS (SCREENSHOT 2) */}
+          {step === 'meal_plan_intro' && (() => {
+            const calorieData = calculateCalorieNeeds(
+              parseFloat(currentWeightKg) || 75,
+              parseFloat(heightCm) || 170,
+              parseInt(age, 10) || 30,
+              gender || 'male',
+              'sedentary',
+              fitnessGoal || 'fat_loss'
+            );
+
+            return (
+              <View style={styles.stepBlock}>
+                <View style={styles.bellIconCircle}>
+                  <Text style={styles.bellIconText}>🔔</Text>
+                </View>
+                <Text style={styles.stepTitle}>No olvides tus comidas</Text>
+                <Text style={styles.stepSubtitle}>
+                  El 80% de usuarios que consiguieron progresar la semana anterior, usan notificaciones
+                </Text>
+
+                {/* MOCKUP DEL CELULAR CON NOTIFICACIONES */}
+                <View style={styles.phoneMockCard}>
+                  <View style={styles.phoneMockNotch} />
+
+                  {/* Notificación 1: Desayuno con Calorías y Proteínas Reales */}
+                  <View style={styles.notificationBubble}>
+                    <View style={styles.notificationAppIcon}>
+                      <Text style={{ fontSize: 18 }}>🦝</Text>
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationHeader}>Desayuno 🥛</Text>
+                      <Text style={styles.notificationBody}>
+                        Hoy necesitas {calorieData.targetCalories.toLocaleString()} kcal y {calorieData.proteinGrams} g de proteína. Registra tus alimentos aquí
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Notificación 2: Hora de Comer / Tip */}
+                  <View style={styles.notificationBubble}>
+                    <View style={styles.notificationAppIcon}>
+                      <Text style={{ fontSize: 18 }}>⏰</Text>
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationHeader}>Hora de Comer! ⏰</Text>
+                      <Text style={styles.notificationBody}>
+                        Dato curioso: El Kiwi tiene más vitamina C que la naranja
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* BOTONES DE ACCIÓN ESPECÍFICOS DE ESTA PANTALLA */}
+                <View style={{ marginTop: 28, width: '100%' }}>
+                  <TouchableOpacity
+                    style={styles.primaryGoldBtn}
+                    onPress={() => {
+                      setRemindersEnabled(true);
+                      next();
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.primaryGoldBtnText}>Permitir recordatorios</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.textLinkBtn}
+                    onPress={() => {
+                      setRemindersEnabled(false);
+                      next();
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.textLinkBtnText}>Tal vez después</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })()}
+
           {/* PASO: CONCENTRACIÓN CON SILUETAS INTERACTIVAS */}
           {step === 'focus_areas' && (
             <View style={styles.stepBlock}>
@@ -980,9 +1138,11 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
                 <SummaryRow label="Peso Actual" value={`${currentWeightKg} kg`} />
                 <SummaryRow label="Objetivo" value={getGoalLabel(fitnessGoal)} />
                 <SummaryRow label="Enfoque" value={getApproachLabel(approachType)} />
+                <SummaryRow label="Preferencia Dieta" value={getDietaryLabel(dietaryPreference)} />
                 <SummaryRow label="Concentración" value={getFocusLabels()} />
                 <SummaryRow label="Meta de Peso" value={`${targetWeightKg} kg`} />
                 <SummaryRow label="Duración Rutina" value={routineMinutes === 60 ? '1 Hora' : `${routineMinutes} min`} />
+                <SummaryRow label="Recordatorios" value={remindersEnabled ? 'Activados 🔔' : 'Desactivados 🔕'} />
               </View>
 
               <Text style={styles.disclaimerMini}>
@@ -994,7 +1154,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       </Animated.View>
 
       {/* FOOTER INFERIOR CON BOTÓN CONTINUAR DORADO */}
-      {step !== 'welcome' && (
+      {step !== 'welcome' && step !== 'meal_plan_intro' && (
         <View style={styles.bottomFooter}>
           <TouchableOpacity
             style={[styles.primaryGoldBtn, !canProceed() && styles.primaryGoldBtnDisabled]}
@@ -1727,5 +1887,134 @@ const styles = StyleSheet.create({
     marginTop: 20,
     lineHeight: 16,
     paddingHorizontal: 20,
+  },
+
+  // PREFERENCIA ALIMENTARIA
+  plateIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#18181B',
+    borderWidth: 1,
+    borderColor: '#27272A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  plateIconText: {
+    fontSize: 32,
+  },
+  dietaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18181B',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: '#27272A',
+  },
+  dietaryCardActive: {
+    borderColor: '#FBBF24',
+    backgroundColor: '#1E1B13',
+  },
+  dietaryCardEmoji: {
+    fontSize: 28,
+    marginRight: 14,
+  },
+  dietaryCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  dietaryCardTitleActive: {
+    color: '#FBBF24',
+  },
+  dietaryCardDesc: {
+    fontSize: 13,
+    color: '#A1A1AA',
+    lineHeight: 18,
+  },
+
+  // NOTIFICACIONES / MOCKUP CELULAR
+  bellIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#1C1917',
+    borderWidth: 1,
+    borderColor: '#78350F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  bellIconText: {
+    fontSize: 36,
+  },
+  phoneMockCard: {
+    backgroundColor: '#141416',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#27272A',
+    padding: 16,
+    paddingTop: 12,
+    marginTop: 18,
+    width: '100%',
+    alignItems: 'center',
+  },
+  phoneMockNotch: {
+    width: 60,
+    height: 5,
+    backgroundColor: '#27272A',
+    borderRadius: 3,
+    marginBottom: 16,
+  },
+  notificationBubble: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#222227',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#2E2E38',
+  },
+  notificationAppIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#F59E0B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationHeader: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 3,
+  },
+  notificationBody: {
+    fontSize: 13,
+    color: '#D4D4D8',
+    lineHeight: 18,
+  },
+  textLinkBtn: {
+    marginTop: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textLinkBtnText: {
+    color: '#A1A1AA',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

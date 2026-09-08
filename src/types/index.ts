@@ -27,6 +27,7 @@ export interface UserProfile {
   approachType?: ApproachType;
   obstacles?: ObstacleType[];
   dietaryPreference?: DietaryPreference;
+  remindersEnabled?: boolean;
 }
 
 export interface WeeklyWeighIn {
@@ -55,6 +56,8 @@ export interface ExerciseItem {
   tips: string[];
   requiresEquipment: string;
   difficulty: 'principiante' | 'intermedio' | 'avanzado';
+  gifUrl?: string;
+  exerciseDbId?: string;
 }
 
 export interface RecipeItem {

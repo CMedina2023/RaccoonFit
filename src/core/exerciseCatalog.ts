@@ -27,6 +27,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'squat_goblet',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/b63ZzGe.gif',
+    exerciseDbId: 'b63ZzGe',
   },
   {
     id: 'ex_begin_glute_bridge',
@@ -42,6 +44,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'bridge_glute',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/u0cNiij.gif',
+    exerciseDbId: 'u0cNiij',
   },
   {
     id: 'ex_begin_band_bridge',
@@ -57,6 +61,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'bridge_glute',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/aWedzZX.gif',
+    exerciseDbId: 'aWedzZX',
   },
   {
     id: 'ex_begin_step_jack',
@@ -72,6 +78,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'step_jack',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/1g5bPpA.gif',
+    exerciseDbId: '1g5bPpA',
   },
   {
     id: 'ex_begin_wall_pushup',
@@ -87,6 +95,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'pushup_incline',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/B1EVP9F.gif',
+    exerciseDbId: 'B1EVP9F',
   },
   {
     id: 'ex_begin_clamshell',
@@ -102,6 +112,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'clamshell',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/7WaDzyL.gif',
+    exerciseDbId: '7WaDzyL',
   },
   {
     id: 'ex_begin_band_row',
@@ -117,6 +129,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'principiante',
     animationType: 'row_band',
     levelNumeric: 1,
+    gifUrl: 'https://static.exercisedb.dev/media/DKBwJrL.gif',
+    exerciseDbId: 'DKBwJrL',
   },
 
   // ============================================================
@@ -138,6 +152,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'squat_goblet',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/yn8yg1r.gif',
+    exerciseDbId: 'yn8yg1r',
   },
   {
     id: 'ex_int_db_curl',
@@ -153,6 +169,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'curl_biceps',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/BU15nH4.gif',
+    exerciseDbId: 'BU15nH4',
   },
   {
     id: 'ex_int_db_row',
@@ -168,6 +186,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'row_dumbbell',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/C0MA9bC.gif',
+    exerciseDbId: 'C0MA9bC',
   },
   {
     id: 'ex_int_shoulder_press',
@@ -183,6 +203,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'shoulder_press',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/f1jf47L.gif',
+    exerciseDbId: 'f1jf47L',
   },
   {
     id: 'ex_int_monster_walk',
@@ -198,6 +220,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'monster_walk',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/O95afRA.gif',
+    exerciseDbId: 'O95afRA',
   },
   {
     id: 'ex_int_lateral_raise',
@@ -213,6 +237,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'lateral_raise',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/DsgkuIt.gif',
+    exerciseDbId: 'DsgkuIt',
   },
   {
     id: 'ex_int_rdl',
@@ -228,6 +254,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'deadlift_rdl',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/rR0LJzx.gif',
+    exerciseDbId: 'rR0LJzx',
   },
   {
     id: 'ex_int_cardio_hknees',
@@ -243,6 +271,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'intermedio',
     animationType: 'step_jack',
     levelNumeric: 2,
+    gifUrl: 'https://static.exercisedb.dev/media/ealLwvX.gif',
+    exerciseDbId: 'ealLwvX',
   },
 
   // ============================================================
@@ -264,6 +294,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'squat_goblet',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/LIlE5Tn.gif',
+    exerciseDbId: 'LIlE5Tn',
   },
   {
     id: 'ex_adv_db_band_squat',
@@ -279,6 +311,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'squat_goblet',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/HsvHqgf.gif',
+    exerciseDbId: 'HsvHqgf',
   },
   {
     id: 'ex_adv_pushup_floor',
@@ -294,6 +328,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'pushup_incline',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/I4hDWkc.gif',
+    exerciseDbId: 'I4hDWkc',
   },
   {
     id: 'ex_adv_mountain_climber',
@@ -309,6 +345,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'mountain_climber',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/RJgzwny.gif',
+    exerciseDbId: 'RJgzwny',
   },
   {
     id: 'ex_adv_shadow_box',
@@ -324,6 +362,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'shadow_box',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/0JtKWum.gif',
+    exerciseDbId: '0JtKWum',
   },
   {
     id: 'ex_adv_kickback',
@@ -339,6 +379,8 @@ export const EXERCISES_CATALOG: ExtendedExerciseItem[] = [
     difficulty: 'avanzado',
     animationType: 'kickback_glute',
     levelNumeric: 3,
+    gifUrl: 'https://static.exercisedb.dev/media/bQy2Eni.gif',
+    exerciseDbId: 'bQy2Eni',
   },
 ];
 

@@ -89,3 +89,22 @@ Cada sesión de entrenamiento se divide en 3 fases obligatorias:
 ## 5. Reglas de Prescripción y Advertencias de Salud
 - Toda rutina debe incluir una advertencia: *"Consulta a tu médico antes de iniciar cualquier plan si tienes condiciones preexistentes, problemas articulares o hipertensión"*.
 - Si un usuario reporta dolor articular agudo, la app debe sugerir suspender el ejercicio y ofrecer una alternativa sin impacto.
+
+---
+
+## 6. Base de Conocimiento Indexada: Catálogo 3D ExerciseDB Home (768 Ejercicios)
+
+El skill cuenta con una base de conocimiento estructurada en:
+`resources/exercisedb_home_catalog.json`
+
+Esta base indexa los **768 ejercicios realizables exclusivamente con equipo portátil y de casa**:
+- **319 ejercicios con Mancuernas (`dumbbell`):** Curls, presses, remos, zancadas, elevaciones laterales, etc.
+- **372 ejercicios con Peso Corporal y Cardio (`body weight`):** Planchas, puentes, flexiones inclinadas, escaladores, jumping jacks sin impacto, etc.
+- **67 ejercicios con Bandas Elásticas de Pierna (`band`):** Pasos laterales (monster walk), clamshells, patadas de glúteo, abducciones, etc.
+- **10 ejercicios con Ligas de Resistencia (`resistance band`):** Remos con liga pisada, curls de bíceps, aperturas, jalones.
+
+### Reglas de Prescripción con el Catálogo Indexado:
+1. **Consultar antes de crear o alterar ejercicios:** Cuando se requiera un nuevo movimiento para un grupo muscular (ej. deltoides, dorsal, glúteo medio), buscar en `exercisedb_home_catalog.json` por `targetMuscles` o `equipments`.
+2. **Obtención de Animación:** Extraer el campo `gifUrl` correspondiente (`https://static.exercisedb.dev/media/{exerciseId}.gif`) para vincular la animación 3D de alta fidelidad sin requerir código de dibujo manual.
+3. **Traducción y Biomecánica Amigable:** Adaptar el nombre al español con lenguaje claro y motivador, manteniendo las instrucciones estructuradas en pasos sencillos.
+
