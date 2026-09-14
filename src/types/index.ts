@@ -110,3 +110,11 @@ export interface VirtualPetState {
   unlockedAccessories: string[];
   dialogMessage: string;
 }
+
+export interface DailyMealsLog {
+  date: string; // YYYY-MM-DD
+  breakfast?: RecipeItem;
+  lunch?: RecipeItem;
+  dinner?: RecipeItem;
+  snack?: RecipeItem;
+}

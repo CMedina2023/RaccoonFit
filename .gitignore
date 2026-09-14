@@ -43,3 +43,5 @@ yarn-error.*
 # Ignorados personalizados
 Photos-1-001/
 Notas de mejora.txt
+*.pdf
+

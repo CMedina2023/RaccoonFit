@@ -29,6 +29,7 @@ export default function App() {
     userProfile,
     weighInHistory,
     hydrationHistory,
+    mealsHistory,
     currentPlan,
     petState,
     toastMessage,
@@ -41,6 +42,9 @@ export default function App() {
     activatePlan,
     removeExerciseFromPlan,
     removeRecipeFromPlan,
+    shuffleSingleMeal,
+    shuffleAllMeals,
+    selectMealForDay,
     resetAll,
   } = useAppStore();
 
@@ -224,6 +228,13 @@ export default function App() {
             onActivatePlan={activatePlan}
             onRemoveExercise={removeExerciseFromPlan}
             onRemoveRecipe={removeRecipeFromPlan}
+            onShuffleMeal={shuffleSingleMeal}
+            onShuffleAllMeals={shuffleAllMeals}
+            selectedMealsHistory={mealsHistory}
+            onSelectMealForDay={(mealType, recipe) => {
+              const todayStr = new Date().toISOString().split('T')[0];
+              selectMealForDay(todayStr, mealType, recipe);
+            }}
             onRequestNewPlan={() => setActiveTab('perfil')}
           />
         )}
@@ -233,6 +244,7 @@ export default function App() {
           <HistoryScreen
             weighIns={weighInHistory}
             hydrationHistory={hydrationHistory}
+            mealsHistory={mealsHistory}
             onOpenWeighInModal={() => setShowWeighInModal(true)}
           />
         )}

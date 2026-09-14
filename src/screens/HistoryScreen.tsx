@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Svg, { Path, Line, Circle, Rect, Text as SvgText } from 'react-native-svg';
-import { WeeklyWeighIn } from '../types';
+import { WeeklyWeighIn, DailyMealsLog } from '../types';
 import { MonthSummary, compareTwoMonths } from '../core/historyAnalytics';
 
 interface Props {
   weighIns: WeeklyWeighIn[];
   hydrationHistory: Record<string, number>;
+  mealsHistory?: Record<string, DailyMealsLog>;
   onOpenWeighInModal: () => void;
 }
 
 export const HistoryScreen: React.FC<Props> = ({
   weighIns,
   hydrationHistory,
+  mealsHistory = {},
   onOpenWeighInModal,
 }) => {
-  const [selectedTab, setSelectedTab] = useState<'semanal' | 'mensual' | 'comparador'>('semanal');
+  const [selectedTab, setSelectedTab] = useState<'semanal' | 'mensual' | 'comidas' | 'comparador'>('semanal');
 
   // Datos mock / derivados para la vista comparativa
   const sampleMonthA: MonthSummary = {
@@ -107,11 +109,19 @@ export const HistoryScreen: React.FC<Props> = ({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tabItem, selectedTab === 'comidas' && styles.tabItemActive]}
+          onPress={() => setSelectedTab('comidas')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'comidas' && styles.tabTextActive]}>
+            🥗 Comidas
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tabItem, selectedTab === 'comparador' && styles.tabItemActive]}
           onPress={() => setSelectedTab('comparador')}
         >
           <Text style={[styles.tabText, selectedTab === 'comparador' && styles.tabTextActive]}>
-            Comparar Meses
+            Comparador
           </Text>
         </TouchableOpacity>
       </View>
@@ -282,6 +292,84 @@ export const HistoryScreen: React.FC<Props> = ({
           </View>
         </View>
       )}
+
+      {/* CONTENIDO 4: HISTORIAL DE COMIDAS DIARIAS */}
+      {selectedTab === 'comidas' && (() => {
+        const dates = Object.keys(mealsHistory).sort((a, b) => b.localeCompare(a));
+        if (dates.length === 0) {
+          return (
+            <View style={styles.sectionCard}>
+              <Text style={styles.cardTitle}>Historial de Alimentación Diaria</Text>
+              <Text style={styles.cardDesc}>Tus comidas seleccionadas se registrarán aquí día con día</Text>
+              <View style={styles.emptyMealsBox}>
+                <Text style={{ fontSize: 40, marginBottom: 8 }}>🥗</Text>
+                <Text style={styles.emptyMealsTitle}>Aún no has registrado comidas</Text>
+                <Text style={styles.emptyMealsSub}>
+                  Ve a la pestaña "Mi Plan", revisa las 3 opciones de cada momento y presiona "⚪ Elegir para Hoy" para guardar tu menú.
+                </Text>
+              </View>
+            </View>
+          );
+        }
+
+        return (
+          <View>
+            {dates.map((dateStr) => {
+              const log = mealsHistory[dateStr];
+              const meals = [
+                { type: 'Desayuno', emoji: '🌅', item: log.breakfast },
+                { type: 'Comida', emoji: '☀️', item: log.lunch },
+                { type: 'Cena', emoji: '🌙', item: log.dinner },
+                { type: 'Snack', emoji: '🍎', item: log.snack },
+              ].filter((m) => !!m.item);
+
+              const totalCalories = meals.reduce((acc, m) => acc + (m.item?.approxCalories || 0), 0);
+              const totalProtein = meals.reduce((acc, m) => acc + (m.item?.approxProteinGrams || 0), 0);
+
+              const todayStr = new Date().toISOString().split('T')[0];
+              const isToday = dateStr === todayStr;
+
+              return (
+                <View key={dateStr} style={styles.sectionCard}>
+                  <View style={styles.mealDateHeader}>
+                    <View>
+                      <Text style={styles.mealDateTitle}>
+                        {isToday ? '📅 Hoy' : `📅 ${dateStr}`}
+                      </Text>
+                      <Text style={styles.mealDateSub}>
+                        {meals.length} de 4 momentos elegidos
+                      </Text>
+                    </View>
+                    <View style={styles.mealNutriTotals}>
+                      <Text style={styles.mealTotalKcal}>~{totalCalories} kcal</Text>
+                      <Text style={styles.mealTotalProt}>{totalProtein}g proteína</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.mealCardsList}>
+                    {meals.map((m, idx) => (
+                      <View key={idx} style={styles.mealHistoryItem}>
+                        <View style={styles.mealHistoryTypeRow}>
+                          <Text style={styles.mealHistoryTypeTag}>
+                            {m.emoji} {m.type}
+                          </Text>
+                          <Text style={styles.mealHistoryNutri}>
+                            ⏱️ {m.item?.prepTimeMinutes} min • ~{m.item?.approxCalories} kcal • {m.item?.approxProteinGrams}g prot
+                          </Text>
+                        </View>
+                        <Text style={styles.mealHistoryTitle}>{m.item?.title}</Text>
+                        <Text style={styles.mealHistoryIngredients} numberOfLines={2}>
+                          • {m.item?.ingredients.slice(0, 4).join(' • ')}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        );
+      })()}
     </ScrollView>
   );
 };
@@ -505,4 +593,87 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
+  emptyMealsBox: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  emptyMealsTitle: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  emptyMealsSub: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  mealDateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+    paddingBottom: 10,
+    marginBottom: 10,
+  },
+  mealDateTitle: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  mealDateSub: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  mealNutriTotals: {
+    alignItems: 'flex-end',
+  },
+  mealTotalKcal: {
+    color: '#10B981',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  mealTotalProt: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  mealCardsList: {
+    gap: 8,
+  },
+  mealHistoryItem: {
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    padding: 10,
+  },
+  mealHistoryTypeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  mealHistoryTypeTag: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  mealHistoryNutri: {
+    color: '#94A3B8',
+    fontSize: 11,
+  },
+  mealHistoryTitle: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  mealHistoryIngredients: {
+    color: '#64748B',
+    fontSize: 11,
+  },
 });
+

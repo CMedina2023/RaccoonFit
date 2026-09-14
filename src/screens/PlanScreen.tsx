@@ -7,14 +7,18 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { GeneratedPlan, ExerciseItem, RecipeItem } from '../types';
+import { GeneratedPlan, ExerciseItem, RecipeItem, DailyMealsLog } from '../types';
 
 interface Props {
   plan: GeneratedPlan | null;
   onActivatePlan: (plan: GeneratedPlan) => void;
   onRemoveExercise: (id: string) => void;
   onRemoveRecipe: (id: string, mealType: keyof GeneratedPlan['selectedMeals']) => void;
+  onShuffleMeal?: (mealType: keyof GeneratedPlan['selectedMeals'], currentRecipeId: string) => void;
+  onShuffleAllMeals?: () => void;
   onRequestNewPlan: () => void;
+  selectedMealsHistory?: Record<string, DailyMealsLog>;
+  onSelectMealForDay?: (mealType: keyof GeneratedPlan['selectedMeals'], recipe: RecipeItem) => void;
 }
 
 export const PlanScreen: React.FC<Props> = ({
@@ -22,11 +26,18 @@ export const PlanScreen: React.FC<Props> = ({
   onActivatePlan,
   onRemoveExercise,
   onRemoveRecipe,
+  onShuffleMeal,
+  onShuffleAllMeals,
   onRequestNewPlan,
+  selectedMealsHistory,
+  onSelectMealForDay,
 }) => {
   const [selectedMealTab, setSelectedMealTab] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>(
     'breakfast'
   );
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayMeals = selectedMealsHistory?.[todayStr];
 
   if (!plan) {
     return (
@@ -111,9 +122,20 @@ export const PlanScreen: React.FC<Props> = ({
       ))}
 
       {/* SECCIÓN: PLAN DE ALIMENTACIÓN (4 TIEMPOS) */}
-      <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-        <Text style={styles.sectionTitle}>Menú Diario Recomendado</Text>
-        <Text style={styles.sectionHelper}>Ingredientes económicos y accesibles de mercado</Text>
+      <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+        <View style={styles.sectionHeaderCol}>
+          <Text style={styles.sectionTitle}>Menú Diario Recomendado</Text>
+          <Text style={styles.sectionHelper}>Ingredientes económicos y accesibles de mercado</Text>
+        </View>
+        {onShuffleAllMeals && (
+          <TouchableOpacity
+            style={styles.shuffleAllBtn}
+            onPress={onShuffleAllMeals}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.shuffleAllBtnText}>🎲 Barajar Todo</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Pestañas de 4 momentos */}
@@ -142,35 +164,100 @@ export const PlanScreen: React.FC<Props> = ({
       </View>
 
       {/* Recetas del momento seleccionado */}
-      {plan.selectedMeals[selectedMealTab].map((recipe) => (
-        <View key={recipe.id} style={styles.itemCard}>
-          <View style={styles.itemTopRow}>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{recipe.title}</Text>
-              <Text style={styles.itemBadgeCategory}>
-                ⏱️ {recipe.prepTimeMinutes} min • ~{recipe.approxCalories} kcal • {recipe.approxProteinGrams}g proteína
-              </Text>
-            </View>
+      {plan.selectedMeals[selectedMealTab]?.length === 0 ? (
+        <View style={styles.emptyMealCard}>
+          <Text style={styles.emptyMealText}>No hay platillo seleccionado para este momento.</Text>
+          {onShuffleMeal && (
             <TouchableOpacity
-              onPress={() => onRemoveRecipe(recipe.id, selectedMealTab)}
-              style={styles.removeBtn}
+              style={styles.shuffleEmptyBtn}
+              onPress={() => onShuffleMeal(selectedMealTab, '')}
             >
-              <Text style={styles.removeBtnText}>✕</Text>
+              <Text style={styles.shuffleEmptyBtnText}>✨ Sugerir Nuevo Platillo</Text>
             </TouchableOpacity>
-          </View>
-
-          <Text style={styles.ingredientsTitle}>Ingredientes accesibles:</Text>
-          {recipe.ingredients.map((ing, i) => (
-            <Text key={i} style={styles.ingredientText}>
-              • {ing}
-            </Text>
-          ))}
+          )}
         </View>
-      ))}
+      ) : (
+        plan.selectedMeals[selectedMealTab].map((recipe) => {
+          const isSelectedForToday = todayMeals?.[selectedMealTab]?.id === recipe.id;
+
+          return (
+            <View
+              key={recipe.id}
+              style={[styles.itemCard, isSelectedForToday && styles.itemCardSelected]}
+            >
+              <View style={styles.itemTopRow}>
+                <View style={styles.itemInfo}>
+                  <View style={styles.titleBadgeRow}>
+                    <Text style={styles.itemName}>{recipe.title}</Text>
+                    {isSelectedForToday && (
+                      <View style={styles.selectedBadge}>
+                        <Text style={styles.selectedBadgeText}>ELEGIDO HOY</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.itemBadgeCategory}>
+                    ⏱️ {recipe.prepTimeMinutes} min • ~{recipe.approxCalories} kcal • {recipe.approxProteinGrams}g proteína
+                  </Text>
+                </View>
+                <View style={styles.cardActionsRow}>
+                  {onSelectMealForDay && (
+                    <TouchableOpacity
+                      onPress={() => onSelectMealForDay(selectedMealTab, recipe)}
+                      style={[
+                        styles.selectMealBtn,
+                        isSelectedForToday && styles.selectMealBtnActive,
+                      ]}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.selectMealBtnText,
+                          isSelectedForToday && styles.selectMealBtnTextActive,
+                        ]}
+                      >
+                        {isSelectedForToday ? '✅ Seleccionado' : '⚪ Elegir para Hoy'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {onShuffleMeal && (
+                    <TouchableOpacity
+                      onPress={() => onShuffleMeal(selectedMealTab, recipe.id)}
+                      style={styles.shuffleBtn}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.shuffleBtnText}>🔄 Cambiar</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() => onRemoveRecipe(recipe.id, selectedMealTab)}
+                    style={styles.removeBtn}
+                  >
+                    <Text style={styles.removeBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+            <Text style={styles.ingredientsTitle}>Ingredientes accesibles:</Text>
+            {recipe.ingredients.map((ing, i) => (
+              <Text key={i} style={styles.ingredientText}>
+                • {ing}
+              </Text>
+            ))}
+
+            <Text style={[styles.ingredientsTitle, { marginTop: 10 }]}>Preparación sencilla:</Text>
+            {recipe.instructions.map((step, s) => (
+              <Text key={s} style={styles.ingredientText}>
+                {s + 1}. {step}
+              </Text>
+            ))}
+          </View>
+        );
+      })
+      )}
 
       {/* Botón para recalcular / regenerar plan */}
       <TouchableOpacity style={styles.secondaryBtn} onPress={onRequestNewPlan}>
-        <Text style={styles.secondaryBtnText}>🔄 Reajustar o Cambiar Parámetros del Plan</Text>
+        <Text style={styles.secondaryBtnText}>⚙️ Reajustar Parámetros del Perfil</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -305,6 +392,16 @@ const styles = StyleSheet.create({
   sectionHeader: {
     marginBottom: 8,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionHeaderCol: {
+    flex: 1,
+    marginRight: 10,
+  },
   sectionTitle: {
     color: '#F8FAFC',
     fontSize: 16,
@@ -315,6 +412,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  shuffleAllBtn: {
+    backgroundColor: '#065F46',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  shuffleAllBtnText: {
+    color: '#34D399',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   itemCard: {
     backgroundColor: '#1E293B',
     borderRadius: 14,
@@ -323,10 +433,101 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#334155',
   },
+  itemCardSelected: {
+    borderColor: '#10B981',
+    borderWidth: 2,
+    backgroundColor: '#132A2A',
+  },
+  titleBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  selectedBadge: {
+    backgroundColor: '#065F46',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  selectedBadgeText: {
+    color: '#34D399',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  selectMealBtn: {
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#475569',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 6,
+  },
+  selectMealBtnActive: {
+    backgroundColor: '#065F46',
+    borderColor: '#10B981',
+  },
+  selectMealBtnText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  selectMealBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
   itemTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+  },
+  cardActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  shuffleBtn: {
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginRight: 6,
+  },
+  shuffleBtnText: {
+    color: '#10B981',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  emptyMealCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 14,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginBottom: 12,
+  },
+  emptyMealText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  shuffleEmptyBtn: {
+    backgroundColor: '#10B981',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  shuffleEmptyBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
   },
   itemInfo: {
     flex: 1,
