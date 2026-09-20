@@ -14,12 +14,13 @@ import {
 import {
   UserProfile,
   FitnessGoal,
-  TargetZone,
   ApproachType,
   ObstacleType,
   DietaryPreference,
+  TrainingLevel,
 } from '../types';
-import { calculateCalorieNeeds } from '../core/calorieCalculator';
+import { TRAINING_LEVELS } from '../core/trainingLevel';
+import { useCalorieAnalysis } from '../hooks/useCalorieAnalysis';
 import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, G, Rect, Text as SvgText } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
@@ -44,9 +45,8 @@ type Step =
   | 'progress_projection'
   | 'meal_plan_intro'
   | 'dietary_preference'
-  | 'focus_areas'
   | 'target_weight'
-  | 'time'
+  | 'training_level'
   | 'summary';
 
 const STEPS: Step[] = [
@@ -64,9 +64,8 @@ const STEPS: Step[] = [
   'progress_projection',
   'dietary_preference',
   'meal_plan_intro',
-  'focus_areas',
   'target_weight',
-  'time',
+  'training_level',
   'summary',
 ];
 
@@ -85,9 +84,16 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
   const [obstacles, setObstacles] = useState<ObstacleType[]>([]);
   const [dietaryPreference, setDietaryPreference] = useState<DietaryPreference | null>(null);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
-  const [focusZones, setFocusZones] = useState<TargetZone[]>([]);
   const [targetWeightKg, setTargetWeightKg] = useState('');
-  const [routineMinutes, setRoutineMinutes] = useState<20 | 30 | 60 | null>(null);
+  const [routineMinutes, setRoutineMinutes] = useState<20 | 30 | 60>(30);
+  const [trainingLevel, setTrainingLevel] = useState<TrainingLevel | null>(null);
+  const calorieAnalysis = useCalorieAnalysis({
+    weightInput: currentWeightKg,
+    heightInput: heightCm,
+    ageInput: age,
+    gender,
+    goal: fitnessGoal,
+  });
 
   const animateTransition = (nextStep: Step) => {
     Animated.timing(fadeAnim, {
@@ -126,35 +132,6 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
     }
   };
 
-  // Focus Zones toggle
-  const toggleZone = (zone: TargetZone) => {
-    if (zone === 'full_body') {
-      if (focusZones.includes('full_body')) {
-        setFocusZones([]);
-      } else {
-        setFocusZones(['full_body']);
-      }
-      return;
-    }
-
-    const withoutFullBody = focusZones.filter((z) => z !== 'full_body');
-    if (withoutFullBody.includes(zone)) {
-      setFocusZones(withoutFullBody.filter((z) => z !== zone));
-    } else {
-      const updated = [...withoutFullBody, zone];
-      if (updated.length === 4) {
-        setFocusZones(['full_body']);
-      } else {
-        setFocusZones(updated);
-      }
-    }
-  };
-
-  const isZoneActive = (zone: TargetZone) => {
-    if (focusZones.includes('full_body')) return true;
-    return focusZones.includes(zone);
-  };
-
   const handleFinish = () => {
     const profile: UserProfile = {
       name: name.trim() || 'Compañero',
@@ -164,13 +141,13 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       startingWeightKg: parseFloat(currentWeightKg) || 80,
       targetWeightKg: parseFloat(targetWeightKg) || 70,
       activityLevel: 'sedentary',
-      preferredRoutineMinutes: routineMinutes || 30,
+      trainingLevel: trainingLevel || 'beginner',
+      preferredRoutineMinutes: routineMinutes,
       weighInDayOfWeek: 5,
       createdAt: new Date().toISOString(),
       fitnessGoal: fitnessGoal || 'fat_loss',
       approachType: approachType || 'nutrition_plan',
       obstacles: obstacles.length > 0 ? obstacles : ['inconsistency'],
-      focusZones: focusZones.length > 0 ? focusZones : ['full_body'],
       dietaryPreference: dietaryPreference || 'balanced',
       remindersEnabled,
     };
@@ -193,9 +170,8 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       case 'progress_projection': return true;
       case 'dietary_preference': return dietaryPreference !== null;
       case 'meal_plan_intro': return true;
-      case 'focus_areas': return focusZones.length > 0;
       case 'target_weight': return parseFloat(targetWeightKg) >= 30 && parseFloat(targetWeightKg) <= 300;
-      case 'time': return routineMinutes !== null;
+      case 'training_level': return trainingLevel !== null;
       case 'summary': return true;
       default: return false;
     }
@@ -227,18 +203,6 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
       case 'calorie_tracking': return 'Conteo / Hábitos 📊';
       default: return '-';
     }
-  };
-
-  const getFocusLabels = () => {
-    if (focusZones.includes('full_body') || focusZones.length === 0) return 'Todo el cuerpo 🌟';
-    const dict: Record<TargetZone, string> = {
-      arms: 'Brazos',
-      abs: 'Abdominales',
-      glutes: 'Glúteos',
-      legs: 'Piernas',
-      full_body: 'Todo el cuerpo',
-    };
-    return focusZones.map((z) => dict[z]).join(', ');
   };
 
   return (
@@ -599,14 +563,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
 
           {/* PASO: ANÁLISIS Y GRÁFICA RESUMEN DE CALORÍAS */}
           {step === 'calorie_analysis' && (() => {
-            const calorieData = calculateCalorieNeeds(
-              parseFloat(currentWeightKg) || 75,
-              parseFloat(heightCm) || 170,
-              parseInt(age, 10) || 30,
-              gender || 'male',
-              'sedentary',
-              fitnessGoal || 'fat_loss'
-            );
+            const calorieData = calorieAnalysis;
 
             const maxBarValue = Math.max(calorieData.tdee, calorieData.targetCalories) * 1.15;
             const tdeeWidthPct = Math.min(100, Math.round((calorieData.tdee / maxBarValue) * 100));
@@ -882,14 +839,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
 
           {/* PASO: NO OLVIDES TUS COMIDAS / RECORDATORIOS (SCREENSHOT 2) */}
           {step === 'meal_plan_intro' && (() => {
-            const calorieData = calculateCalorieNeeds(
-              parseFloat(currentWeightKg) || 75,
-              parseFloat(heightCm) || 170,
-              parseInt(age, 10) || 30,
-              gender || 'male',
-              'sedentary',
-              fitnessGoal || 'fat_loss'
-            );
+            const calorieData = calorieAnalysis;
 
             return (
               <View style={styles.stepBlock}>
@@ -960,84 +910,6 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
             );
           })()}
 
-          {/* PASO: CONCENTRACIÓN CON SILUETAS INTERACTIVAS */}
-          {step === 'focus_areas' && (
-            <View style={styles.stepBlock}>
-              <Text style={styles.stepTitle}>Concentración</Text>
-              <Text style={styles.stepSubtitle}>
-                {gender === 'female' ? '👩 Figura Femenina' : '👨 Figura Masculina'} — Toca las zonas clave o elige todo el cuerpo
-              </Text>
-
-              <View style={styles.anatomyCard}>
-                <View style={styles.anatomyHeader}>
-                  <Text style={styles.anatomyIcon}>{gender === 'female' ? '💃' : '🏃‍♂️'}</Text>
-                  <View style={styles.badgePill}>
-                    <Text style={styles.badgePillText}>
-                      {focusZones.includes('full_body') ? '✨ Enfoque Completo' : `${focusZones.length} zona(s) activa(s)`}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* ZONAS */}
-                <View style={styles.zoneGrid}>
-                  <TouchableOpacity
-                    style={[styles.zoneTile, isZoneActive('arms') && styles.zoneTileActive]}
-                    onPress={() => toggleZone('arms')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.zoneTileEmoji}>🦾</Text>
-                    <Text style={[styles.zoneTileLabel, isZoneActive('arms') && styles.zoneTileLabelActive]}>Brazos</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.zoneTile, isZoneActive('abs') && styles.zoneTileActive]}
-                    onPress={() => toggleZone('abs')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.zoneTileEmoji}>🍫</Text>
-                    <Text style={[styles.zoneTileLabel, isZoneActive('abs') && styles.zoneTileLabelActive]}>Abdomen</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.zoneTile, isZoneActive('glutes') && styles.zoneTileActive]}
-                    onPress={() => toggleZone('glutes')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.zoneTileEmoji}>🍑</Text>
-                    <Text style={[styles.zoneTileLabel, isZoneActive('glutes') && styles.zoneTileLabelActive]}>Glúteos</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.zoneTile, isZoneActive('legs') && styles.zoneTileActive]}
-                    onPress={() => toggleZone('legs')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.zoneTileEmoji}>🦵</Text>
-                    <Text style={[styles.zoneTileLabel, isZoneActive('legs') && styles.zoneTileLabelActive]}>Piernas</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* BOTÓN TODO EL CUERPO */}
-                <TouchableOpacity
-                  style={[styles.fullBodyOption, focusZones.includes('full_body') && styles.fullBodyOptionActive]}
-                  onPress={() => toggleZone('full_body')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.fullBodyEmoji}>🌟</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.fullBodyTitle, focusZones.includes('full_body') && styles.fullBodyTitleActive]}>
-                      Todo el cuerpo
-                    </Text>
-                    <Text style={styles.fullBodySub}>Rutina integral equilibrada para todas las áreas</Text>
-                  </View>
-                  <View style={[styles.radioCircle, focusZones.includes('full_body') && styles.radioCircleActive]}>
-                    {focusZones.includes('full_body') && <Text style={styles.radioCheck}>✓</Text>}
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
           {/* PASO: PESO OBJETIVO */}
           {step === 'target_weight' && (
             <View style={styles.stepBlock}>
@@ -1058,64 +930,20 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
             </View>
           )}
 
-          {/* PASO: TIEMPO DE RUTINA */}
-          {step === 'time' && (
+          {/* PASO: NIVEL DE ENTRENAMIENTO */}
+          {step === 'training_level' && (
             <View style={styles.stepBlock}>
-              <Text style={styles.stepTitle}>¿Cuánto tiempo tienes al día?</Text>
+              <Text style={styles.stepTitle}>¿Cuál es tu nivel de entrenamiento?</Text>
               <Text style={styles.stepSubtitle}>
-                El mejor entrenamiento es el que puedes cumplir con regularidad
+                Elige el punto de partida que se sienta seguro para ti. Podrás cambiarlo después.
               </Text>
-
-              <TouchableOpacity
-                style={[styles.selectCard, routineMinutes === 20 && styles.selectCardActive]}
-                onPress={() => setRoutineMinutes(20)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardEmojiCircle}>
-                  <Text style={styles.cardEmoji}>⚡</Text>
-                </View>
-                <View style={styles.cardTextCol}>
-                  <Text style={styles.cardTitle}>20 Minutos</Text>
-                  <Text style={styles.cardSub}>Circuito ágil de alta efectividad</Text>
-                </View>
-                <View style={[styles.radioCircle, routineMinutes === 20 && styles.radioCircleActive]}>
-                  {routineMinutes === 20 && <Text style={styles.radioCheck}>✓</Text>}
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.selectCard, routineMinutes === 30 && styles.selectCardActive]}
-                onPress={() => setRoutineMinutes(30)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardEmojiCircle}>
-                  <Text style={styles.cardEmoji}>💪</Text>
-                </View>
-                <View style={styles.cardTextCol}>
-                  <Text style={styles.cardTitle}>30 Minutos</Text>
-                  <Text style={styles.cardSub}>Estructurado con descansos y series controladas</Text>
-                </View>
-                <View style={[styles.radioCircle, routineMinutes === 30 && styles.radioCircleActive]}>
-                  {routineMinutes === 30 && <Text style={styles.radioCheck}>✓</Text>}
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.selectCard, routineMinutes === 60 && styles.selectCardActive]}
-                onPress={() => setRoutineMinutes(60)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardEmojiCircle}>
-                  <Text style={styles.cardEmoji}>🏋️</Text>
-                </View>
-                <View style={styles.cardTextCol}>
-                  <Text style={styles.cardTitle}>1 Hora</Text>
-                  <Text style={styles.cardSub}>Sesión completa con fuerza y acondicionamiento</Text>
-                </View>
-                <View style={[styles.radioCircle, routineMinutes === 60 && styles.radioCircleActive]}>
-                  {routineMinutes === 60 && <Text style={styles.radioCheck}>✓</Text>}
-                </View>
-              </TouchableOpacity>
+              {Object.values(TRAINING_LEVELS).map((level) => (
+                <TouchableOpacity key={level.id} style={[styles.selectCard, trainingLevel === level.id && styles.selectCardActive]} onPress={() => setTrainingLevel(level.id)} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel={`Nivel ${level.label}`}>
+                  <View style={styles.cardEmojiCircle}><Text style={styles.cardEmoji}>{level.numericLevel === 1 ? '🌱' : level.numericLevel === 2 ? '💪' : '🏆'}</Text></View>
+                  <View style={styles.cardTextCol}><Text style={styles.cardTitle}>{level.label}</Text><Text style={styles.cardSub}>{level.description}</Text></View>
+                  <View style={[styles.radioCircle, trainingLevel === level.id && styles.radioCircleActive]}>{trainingLevel === level.id && <Text style={styles.radioCheck}>✓</Text>}</View>
+                </TouchableOpacity>
+              ))}
             </View>
           )}
 
@@ -1139,10 +967,15 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
                 <SummaryRow label="Objetivo" value={getGoalLabel(fitnessGoal)} />
                 <SummaryRow label="Enfoque" value={getApproachLabel(approachType)} />
                 <SummaryRow label="Preferencia Dieta" value={getDietaryLabel(dietaryPreference)} />
-                <SummaryRow label="Concentración" value={getFocusLabels()} />
                 <SummaryRow label="Meta de Peso" value={`${targetWeightKg} kg`} />
-                <SummaryRow label="Duración Rutina" value={routineMinutes === 60 ? '1 Hora' : `${routineMinutes} min`} />
+                <SummaryRow label="Nivel de entrenamiento" value={trainingLevel ? TRAINING_LEVELS[trainingLevel].label : '-'} />
                 <SummaryRow label="Recordatorios" value={remindersEnabled ? 'Activados 🔔' : 'Desactivados 🔕'} />
+              </View>
+
+              <Text style={[styles.stepSubtitle, { marginTop: 16 }]}>Duración por sesión</Text>
+              <Text style={styles.summaryDurationHint}>Ahora ajusta el tiempo de tu rutina. Incluye calentamiento, parte principal y vuelta a la calma.</Text>
+              <View style={styles.summaryDurationOptions}>
+                {([20, 30, 60] as const).map((minutes) => <TouchableOpacity key={minutes} accessibilityRole="button" onPress={() => setRoutineMinutes(minutes)} style={[styles.summaryDurationOption, routineMinutes === minutes && styles.summaryDurationOptionActive]}><Text style={[styles.summaryDurationText, routineMinutes === minutes && styles.summaryDurationTextActive]}>{minutes === 60 ? '60 min' : `${minutes} min`}</Text></TouchableOpacity>)}
               </View>
 
               <Text style={styles.disclaimerMini}>
@@ -1162,7 +995,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
             activeOpacity={0.85}
           >
             <Text style={[styles.primaryGoldBtnText, !canProceed() && styles.primaryGoldBtnTextDisabled]}>
-              {step === 'summary' ? 'Generar Mi Plan 🚀' : 'Continuar'}
+              {step === 'summary' ? 'Generar mi Dieta y Rutina 🚀' : 'Continuar'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -1724,103 +1557,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Anatomía y Concentración
-  anatomyCard: {
-    width: '100%',
-    backgroundColor: '#18181B',
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#27272A',
-  },
-  anatomyHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#27272A',
-  },
-  anatomyIcon: {
-    fontSize: 34,
-  },
-  badgePill: {
-    backgroundColor: '#27272A',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#3F3F46',
-  },
-  badgePillText: {
-    color: '#FBBF24',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  zoneGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  zoneTile: {
-    width: '48%',
-    backgroundColor: '#121215',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 1.5,
-    borderColor: '#27272A',
-  },
-  zoneTileActive: {
-    borderColor: '#FBBF24',
-    backgroundColor: '#2A2006',
-  },
-  zoneTileEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  zoneTileLabel: {
-    color: '#A1A1AA',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  zoneTileLabelActive: {
-    color: '#FFFFFF',
-  },
-  fullBodyOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#121215',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1.5,
-    borderColor: '#27272A',
-  },
-  fullBodyOptionActive: {
-    borderColor: '#FBBF24',
-    backgroundColor: '#2A2006',
-  },
-  fullBodyEmoji: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  fullBodyTitle: {
-    color: '#A1A1AA',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  fullBodyTitleActive: {
-    color: '#FFFFFF',
-  },
-  fullBodySub: {
-    color: '#71717A',
-    fontSize: 11,
-    marginTop: 2,
-  },
-
   // Resumen
   summaryBadge: {
     backgroundColor: '#2A2006',
@@ -1831,6 +1567,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     marginBottom: 12,
   },
+  summaryDurationHint: { color: '#A1A1AA', fontSize: 12, lineHeight: 18, marginTop: 4 },
+  summaryDurationOptions: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  summaryDurationOption: { flex: 1, minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: '#3F3F46', backgroundColor: '#18181B', alignItems: 'center', justifyContent: 'center' },
+  summaryDurationOptionActive: { borderColor: '#FBBF24', backgroundColor: '#2A2006' },
+  summaryDurationText: { color: '#A1A1AA', fontSize: 13, fontWeight: '700' },
+  summaryDurationTextActive: { color: '#FDE68A' },
   summaryBadgeText: {
     color: '#FBBF24',
     fontSize: 11,

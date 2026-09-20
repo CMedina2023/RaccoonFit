@@ -137,3 +137,9 @@ Antes de presentar cualquier código al usuario, el skill `mobile-dev` verifica 
 | **[D] DIP** | ¿Las funciones de `petService` son puras sin efectos secundarios externos? | `virtual-pet` |
 
 > Si algún ítem falla, la entrega se devuelve para corrección antes de presentarla al usuario.
+
+---
+
+## 6. Puerta de cumplimiento obligatoria
+
+La ejecución de cada flujo queda sujeta a [.agents/rules/compliance-gate.md](compliance-gate.md). Los skills son instrucciones obligatorias para el agente responsable, pero el cumplimiento se demuestra mediante el reporte de tarea y las validaciones automatizadas definidas allí. Ninguna entrega puede omitir esa evidencia.

@@ -11,8 +11,16 @@ import {
   StatusBar,
   Animated,
 } from 'react-native';
-import { useAppStore } from './src/store/useAppStore';
-import { calculateBmi } from './src/core/bmiCalculator';
+import {
+  useAppLifecycle,
+  useHydration,
+  usePetState,
+  usePlanActions,
+  useToast,
+  useUserProfile,
+  useWeighIn,
+} from './src/store/selectors';
+import { useBmiAnalysis } from './src/hooks/useBmiAnalysis';
 import { VirtualPetView } from './src/components/VirtualPetView';
 import { BmiGaugeCard } from './src/components/BmiGaugeCard';
 import { HistoryScreen } from './src/screens/HistoryScreen';
@@ -22,31 +30,24 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { UserProfile } from './src/types';
 import { WATER_GOAL_GLASSES, MAX_WATER_GLASSES } from './src/store/useAppStore';
+import { exerciseMediaCache, exerciseMediaProvider } from './src/app/exerciseMediaComposition';
 
 export default function App() {
+  const { isInitialized, initialize, resetAll } = useAppLifecycle();
+  const { userProfile, saveUserProfile } = useUserProfile();
+  const { weighInHistory, addWeeklyWeighIn } = useWeighIn();
+  const { hydrationHistory, addWaterGlass, removeWaterGlass } = useHydration();
+  const { petState } = usePetState();
   const {
-    isInitialized,
-    userProfile,
-    weighInHistory,
-    hydrationHistory,
-    mealsHistory,
     currentPlan,
-    petState,
-    toastMessage,
-    toastType,
-    initialize,
-    saveUserProfile,
-    addWeeklyWeighIn,
-    addWaterGlass,
-    removeWaterGlass,
+    mealsHistory,
     activatePlan,
-    removeExerciseFromPlan,
     removeRecipeFromPlan,
     shuffleSingleMeal,
     shuffleAllMeals,
     selectMealForDay,
-    resetAll,
-  } = useAppStore();
+  } = usePlanActions();
+  const { toastMessage, toastType } = useToast();
 
   const [activeTab, setActiveTab] = useState<'hoy' | 'plan' | 'historico' | 'ejercicios' | 'perfil'>('hoy');
   const [showWeighInModal, setShowWeighInModal] = useState(false);
@@ -71,6 +72,10 @@ export default function App() {
     }
   }, [toastMessage]);
 
+  const currentWeight =
+    weighInHistory.length > 0 ? weighInHistory[0].weightKg : userProfile?.startingWeightKg ?? 0;
+  const bmiAnalysis = useBmiAnalysis(currentWeight, userProfile?.heightCm, userProfile?.gender);
+
   if (!isInitialized) {
     return (
       <View style={styles.loadingContainer}>
@@ -93,9 +98,9 @@ export default function App() {
     );
   }
 
-  const currentWeight =
-    weighInHistory.length > 0 ? weighInHistory[0].weightKg : userProfile.startingWeightKg;
-  const bmiAnalysis = calculateBmi(currentWeight, userProfile.heightCm, userProfile.gender);
+  if (!bmiAnalysis) {
+    return null;
+  }
 
   const todayStr = new Date().toISOString().split('T')[0];
   const waterGlassesToday = hydrationHistory[todayStr] || 0;
@@ -221,12 +226,11 @@ export default function App() {
           </ScrollView>
         )}
 
-        {/* TAB 2: MI PLAN */}
+        {/* TAB 2: DIETA */}
         {activeTab === 'plan' && (
           <PlanScreen
             plan={currentPlan}
             onActivatePlan={activatePlan}
-            onRemoveExercise={removeExerciseFromPlan}
             onRemoveRecipe={removeRecipeFromPlan}
             onShuffleMeal={shuffleSingleMeal}
             onShuffleAllMeals={shuffleAllMeals}
@@ -250,7 +254,9 @@ export default function App() {
         )}
 
         {/* TAB 4: EJERCICIOS */}
-        {activeTab === 'ejercicios' && <ExercisesScreen />}
+        {activeTab === 'ejercicios' && (
+          <ExercisesScreen mediaProvider={exerciseMediaProvider} mediaLoadCache={exerciseMediaCache} />
+        )}
 
         {/* TAB 5: PERFIL */}
         {activeTab === 'perfil' && (
@@ -268,7 +274,7 @@ export default function App() {
       <View style={styles.bottomNav}>
         {([
           { id: 'hoy', icon: '🏠', label: 'Hoy' },
-          { id: 'plan', icon: '📋', label: 'Mi Plan' },
+          { id: 'plan', icon: '🥗', label: 'Dieta' },
           { id: 'historico', icon: '📈', label: 'Histórico' },
           { id: 'ejercicios', icon: '🏋️', label: 'Ejercicios' },
           { id: 'perfil', icon: '👤', label: 'Perfil' },

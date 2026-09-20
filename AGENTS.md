@@ -8,3 +8,4 @@ Este proyecto sigue estrictamente el flujo de desarrollo colegiado y las directr
 3. **Alimentación Realista y Económica:** Desayuno, Comida, Cena y Snacks con ingredientes comunes, cero gourmet.
 4. **Métricas Científicas:** IMC y peso diferenciando hombre y mujer.
 5. **Flujos Obligatorios:** Seguir el flujo estipulado según si es Feature, Bugfix, Mejora UI o Contenido.
+6. **Puerta de Cumplimiento:** Todo cambio debe seguir [.agents/rules/compliance-gate.md](.agents/rules/compliance-gate.md). No se entrega código sin evidencia de skills, revisión SOLID y validaciones exitosas.

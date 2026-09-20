@@ -7,12 +7,11 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { GeneratedPlan, ExerciseItem, RecipeItem, DailyMealsLog } from '../types';
+import { GeneratedPlan, RecipeItem, DailyMealsLog } from '../types';
 
 interface Props {
   plan: GeneratedPlan | null;
   onActivatePlan: (plan: GeneratedPlan) => void;
-  onRemoveExercise: (id: string) => void;
   onRemoveRecipe: (id: string, mealType: keyof GeneratedPlan['selectedMeals']) => void;
   onShuffleMeal?: (mealType: keyof GeneratedPlan['selectedMeals'], currentRecipeId: string) => void;
   onShuffleAllMeals?: () => void;
@@ -24,7 +23,6 @@ interface Props {
 export const PlanScreen: React.FC<Props> = ({
   plan,
   onActivatePlan,
-  onRemoveExercise,
   onRemoveRecipe,
   onShuffleMeal,
   onShuffleAllMeals,
@@ -45,7 +43,7 @@ export const PlanScreen: React.FC<Props> = ({
         <Text style={styles.emptyIcon}>📋</Text>
         <Text style={styles.emptyTitle}>No tienes un plan activo</Text>
         <Text style={styles.emptyDesc}>
-          Configura tus datos de tiempo y nivel en tu perfil para que el sistema genere tu plan flexible.
+          Configura tus preferencias en tu perfil para que el sistema genere tu menú.
         </Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={onRequestNewPlan}>
           <Text style={styles.primaryBtnText}>Generar Plan Automático</Text>
@@ -63,7 +61,7 @@ export const PlanScreen: React.FC<Props> = ({
         <View style={styles.statusBannerTextCol}>
           <Text style={styles.planTitle}>{plan.title}</Text>
           <Text style={styles.planMeta}>
-            Duración: {plan.durationWeeks} semanas • {plan.routineDurationMinutes} min/día • Meta: -{plan.targetLossKg} kg
+            Duración: {plan.durationWeeks} semanas • Meta: -{plan.targetLossKg} kg
           </Text>
           <Text style={styles.planDates}>
             Del {plan.startDate} al {plan.endDate}
@@ -94,35 +92,8 @@ export const PlanScreen: React.FC<Props> = ({
         </View>
       )}
 
-      {/* SECCIÓN: RUTINAS DE EJERCICIO (FLEXIBLE) */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Rutina Propuesta ({plan.selectedExercises.length} ejercicios)</Text>
-        <Text style={styles.sectionHelper}>Puedes descartar ejercicios que no te gusten</Text>
-      </View>
-
-      {plan.selectedExercises.map((exercise) => (
-        <View key={exercise.id} style={styles.itemCard}>
-          <View style={styles.itemTopRow}>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{exercise.name}</Text>
-              <Text style={styles.itemBadgeCategory}>
-                {exercise.category.toUpperCase()} • {exercise.suggestedSets} series x {exercise.suggestedRepsOrSeconds}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => onRemoveExercise(exercise.id)}
-              style={styles.removeBtn}
-            >
-              <Text style={styles.removeBtnText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.itemDesc}>{exercise.description}</Text>
-          <Text style={styles.itemEquip}>Equipamiento: {exercise.requiresEquipment}</Text>
-        </View>
-      ))}
-
-      {/* SECCIÓN: PLAN DE ALIMENTACIÓN (4 TIEMPOS) */}
-      <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+      {/* SECCIÓN: DIETA (4 TIEMPOS) */}
+      <View style={styles.sectionHeaderRow}>
         <View style={styles.sectionHeaderCol}>
           <Text style={styles.sectionTitle}>Menú Diario Recomendado</Text>
           <Text style={styles.sectionHelper}>Ingredientes económicos y accesibles de mercado</Text>

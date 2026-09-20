@@ -69,6 +69,40 @@ El motor `planEngine.ts` opera de acuerdo con las siguientes reglas:
 3. **Flexibilidad:** El usuario puede pulsar `✕` para eliminar cualquier ejercicio o receta antes de iniciar el ciclo.
 4. **Ciclo de Expiración:** Al llegar la fecha de fin (4 semanas), la app evalúa automáticamente si se cumplió la meta de peso pactada y sugiere mantener o recalcular el plan.
 
+### Selección de nivel y duración
+
+```mermaid
+flowchart TD
+    Onboarding[Onboarding] --> Nivel{Nivel de entrenamiento}
+    Nivel --> Principiante[Principiante]
+    Nivel --> Intermedio[Intermedio]
+    Nivel --> Avanzado[Avanzado]
+    Principiante --> Resumen[Resumen del plan]
+    Intermedio --> Resumen
+    Avanzado --> Resumen
+    Resumen --> Duracion[Seleccionar duración: 20, 30 o 60 min]
+    Duracion --> Plan[Generar y guardar plan local]
+    Plan --> Rutina[Mostrar fases y temporizadores durante la rutina]
+```
+
+El onboarding solicita primero el nivel —Principiante, Intermedio o Avanzado— sin introducir tiempos. En el resumen posterior se muestra y ajusta la duración total de sesión. `trainingLevel` es la fuente de la dificultad de la rutina y los perfiles anteriores conservan su mapeo desde `activityLevel`.
+
+### Personalización de ejercicios principales
+
+```mermaid
+flowchart TD
+    Sesion[Sesión generada] --> Accion{Acción}
+    Accion --> Uno[Cambiar ejercicio]
+    Accion --> Todos[Cambiar ejercicios]
+    Uno --> Filtro[Filtrar nivel, músculo, patrón y seguridad]
+    Todos --> Confirmar[Confirmar renovación]
+    Confirmar --> Filtro
+    Filtro --> Guardar[Guardar fase principal local]
+    Guardar --> Mostrar[Mostrar rutina personalizada]
+```
+
+La personalización sólo modifica la fase principal. Conserva el nivel, músculo principal, patrón de movimiento, duración, calentamiento y vuelta a la calma. Las alternativas se obtienen del catálogo local y excluyen impactos altos; si no existe una alternativa segura, la rutina no cambia.
+
 ---
 
 ## 4. 📈 Módulo Histórico y Comparador Inter-Mensual

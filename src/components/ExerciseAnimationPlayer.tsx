@@ -1,35 +1,27 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ImageSourcePropType, View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { resolveAnimationFrame } from './animations/animationRegistry';
 import { useExercisePhase } from '../hooks/useExercisePhase';
 import { PlayerControls } from './animations/PlayerControls';
 import { GifCanvasPlayer } from './animations/GifCanvasPlayer';
+import { UnavailableExercisePreview } from './animations/UnavailableExercisePreview';
+import { ExerciseAnimationType } from '../types';
+import { MediaLoadCache } from '../core/exerciseMedia/MediaLoadCache';
 
 /**
  * ExerciseAnimationType — Tipos de animación vectorial registrados.
  */
-export type ExerciseAnimationType =
-  | 'curl_biceps'
-  | 'squat_goblet'
-  | 'bridge_glute'
-  | 'row_band'
-  | 'lateral_raise'
-  | 'step_jack'
-  | 'pushup_incline'
-  | 'monster_walk'
-  | 'shoulder_press'
-  | 'clamshell'
-  | 'row_dumbbell'
-  | 'kickback_glute'
-  | 'deadlift_rdl'
-  | 'mountain_climber'
-  | 'shadow_box';
+export type { ExerciseAnimationType } from '../types';
 
 export interface ExercisePlayerProps {
   type?: ExerciseAnimationType;
   gifUrl?: string;
+  mediaLoadCache: MediaLoadCache;
   muscleName: string;
+  exerciseName?: string;
+  hasExactLocalFallback?: boolean;
+  localGifSource?: ImageSourcePropType;
   color?: string;
 }
 
@@ -47,12 +39,20 @@ export interface ExercisePlayerProps {
 export const ExerciseAnimationPlayer: React.FC<ExercisePlayerProps> = ({
   type = 'curl_biceps',
   gifUrl,
+  mediaLoadCache,
   muscleName,
+  exerciseName,
+  hasExactLocalFallback = false,
+  localGifSource,
   color = '#10B981',
 }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [speed, setSpeed] = useState<1 | 0.5>(1);
   const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [gifUrl]);
 
   // Hook SRP para gestión de ciclo biomecánico y tempo
   const { phase, phaseLabel, phaseColor, phaseBgColor } = useExercisePhase({
@@ -61,7 +61,9 @@ export const ExerciseAnimationPlayer: React.FC<ExercisePlayerProps> = ({
     color,
   });
 
-  const canUseGif = !!gifUrl && !hasImageError;
+  const canUseGif = (!!gifUrl && !hasImageError) || (!!localGifSource && hasImageError);
+  const canUseExactLocalFallback = !canUseGif && hasExactLocalFallback;
+  const hasPlayablePreview = canUseGif || canUseExactLocalFallback;
   const AnimationFrame = resolveAnimationFrame(type);
 
   return (
@@ -70,13 +72,15 @@ export const ExerciseAnimationPlayer: React.FC<ExercisePlayerProps> = ({
       <View style={styles.visualWrapper}>
         {canUseGif ? (
           <GifCanvasPlayer
-            gifUrl={gifUrl}
+            gifUrl={gifUrl ?? ''}
+            localSource={hasImageError ? localGifSource : undefined}
+            mediaLoadCache={mediaLoadCache}
             isPaused={isPaused}
             speed={speed}
             color={color}
             onError={() => setHasImageError(true)}
           />
-        ) : (
+        ) : canUseExactLocalFallback ? (
           <Svg width={200} height={200} viewBox="0 0 200 200">
             <AnimationFrame phase={phase} color={color} />
             <Circle
@@ -86,24 +90,26 @@ export const ExerciseAnimationPlayer: React.FC<ExercisePlayerProps> = ({
               fill={phase === 0 ? '#94A3B8' : phase === 1 ? color : '#06B6D4'}
             />
           </Svg>
+        ) : (
+          <UnavailableExercisePreview exerciseName={exerciseName} />
         )}
       </View>
 
       {/* Indicador de tempo y respiración biomecánica */}
-      <View style={[styles.phaseLabel, { backgroundColor: phaseBgColor }]}>
+      {hasPlayablePreview && <View style={[styles.phaseLabel, { backgroundColor: phaseBgColor }]}>
         <Text style={[styles.phaseLabelText, { color: phaseColor }]}>{phaseLabel}</Text>
-      </View>
+      </View>}
 
       {/* Músculo activo */}
       <Text style={styles.muscleTarget}>🎯 Músculo activo: {muscleName}</Text>
 
       {/* Controles de reproducción y velocidad técnica (ISP + SRP) */}
-      <PlayerControls
+      {hasPlayablePreview && <PlayerControls
         isPaused={isPaused}
         speed={speed}
         onTogglePause={() => setIsPaused((p) => !p)}
         onToggleSpeed={() => setSpeed((s) => (s === 1 ? 0.5 : 1))}
-      />
+      />}
 
       {canUseGif && (
         <Text style={styles.attribution}>Animación 3D por ExerciseDB · AscendAPI</Text>

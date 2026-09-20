@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput,
 } from 'react-native';
-import { UserProfile, FitnessGoal, TargetZone } from '../types';
-import { useAppStore } from '../store/useAppStore';
+import { UserProfile, FitnessGoal, TrainingLevel } from '../types';
+import { TRAINING_LEVELS } from '../core/trainingLevel';
+import { usePlanActions } from '../store/selectors';
 
 interface Props {
   profile: UserProfile | null;
@@ -16,7 +17,7 @@ interface Props {
 export const ProfileScreen: React.FC<Props> = ({
   profile, onSaveProfile, onResetData, showResetConfirm, setShowResetConfirm,
 }) => {
-  const { currentPlan } = useAppStore();
+  const { currentPlan } = usePlanActions();
 
   const [name, setName] = useState(profile?.name || '');
   const [gender, setGender] = useState<'male' | 'female'>(profile?.gender || 'male');
@@ -25,38 +26,13 @@ export const ProfileScreen: React.FC<Props> = ({
   const [startingWeightKg, setStartingWeightKg] = useState(profile?.startingWeightKg ? String(profile.startingWeightKg) : '');
   const [targetWeightKg, setTargetWeightKg] = useState(profile?.targetWeightKg ? String(profile.targetWeightKg) : '');
   const [activityLevel, setActivityLevel] = useState<UserProfile['activityLevel']>(profile?.activityLevel || 'sedentary');
+  const [trainingLevel, setTrainingLevel] = useState<TrainingLevel>(profile?.trainingLevel || (profile?.activityLevel === 'active' ? 'advanced' : profile?.activityLevel === 'moderate' ? 'intermediate' : 'beginner'));
   const [routineMinutes, setRoutineMinutes] = useState<20 | 30 | 60>(profile?.preferredRoutineMinutes || 30);
   const [fitnessGoal, setFitnessGoal] = useState<FitnessGoal>(profile?.fitnessGoal || 'fat_loss');
-  const [focusZones, setFocusZones] = useState<TargetZone[]>(profile?.focusZones || ['full_body']);
 
   const isValid = name.trim().length >= 2
     && parseInt(age) >= 10 && parseFloat(heightCm) >= 100
     && parseFloat(startingWeightKg) >= 30 && parseFloat(targetWeightKg) >= 30;
-
-  const toggleZone = (zone: TargetZone) => {
-    if (zone === 'full_body') {
-      setFocusZones(['full_body']);
-      return;
-    }
-
-    const withoutFullBody = focusZones.filter((z) => z !== 'full_body');
-    if (withoutFullBody.includes(zone)) {
-      const remaining = withoutFullBody.filter((z) => z !== zone);
-      setFocusZones(remaining.length === 0 ? ['full_body'] : remaining);
-    } else {
-      const updated = [...withoutFullBody, zone];
-      if (updated.length === 4) {
-        setFocusZones(['full_body']);
-      } else {
-        setFocusZones(updated);
-      }
-    }
-  };
-
-  const isZoneActive = (zone: TargetZone) => {
-    if (focusZones.includes('full_body')) return true;
-    return focusZones.includes(zone);
-  };
 
   const handleSave = () => {
     if (!isValid) return;
@@ -68,11 +44,11 @@ export const ProfileScreen: React.FC<Props> = ({
       startingWeightKg: parseFloat(startingWeightKg),
       targetWeightKg: parseFloat(targetWeightKg),
       activityLevel,
+      trainingLevel,
       preferredRoutineMinutes: routineMinutes,
       weighInDayOfWeek: profile?.weighInDayOfWeek ?? 5,
       createdAt: profile?.createdAt || new Date().toISOString(),
       fitnessGoal,
-      focusZones: focusZones.length > 0 ? focusZones : ['full_body'],
     };
     onSaveProfile(updatedProfile);
   };
@@ -142,55 +118,13 @@ export const ProfileScreen: React.FC<Props> = ({
         ))}
       </View>
 
-      {/* Concentración / Zonas */}
-      <Text style={[styles.label, { marginTop: 14 }]}>
-        Concentración ({gender === 'female' ? '👩 Figura Femenina' : '👨 Figura Masculina'}):
-      </Text>
-      <View style={styles.focusContainer}>
-        <View style={styles.zoneRow}>
-          <TouchableOpacity
-            style={[styles.zoneChip, isZoneActive('arms') && styles.zoneChipActive]}
-            onPress={() => toggleZone('arms')}
-          >
-            <Text style={styles.zoneChipText}>🦾 Brazos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.zoneChip, isZoneActive('abs') && styles.zoneChipActive]}
-            onPress={() => toggleZone('abs')}
-          >
-            <Text style={styles.zoneChipText}>🍫 Abdomen</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.zoneChip, isZoneActive('glutes') && styles.zoneChipActive]}
-            onPress={() => toggleZone('glutes')}
-          >
-            <Text style={styles.zoneChipText}>🍑 Glúteos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.zoneChip, isZoneActive('legs') && styles.zoneChipActive]}
-            onPress={() => toggleZone('legs')}
-          >
-            <Text style={styles.zoneChipText}>🦵 Piernas</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-          style={[styles.fullBodyChip, focusZones.includes('full_body') && styles.fullBodyChipActive]}
-          onPress={() => toggleZone('full_body')}
-        >
-          <Text style={[styles.fullBodyChipText, focusZones.includes('full_body') && styles.fullBodyChipTextActive]}>
-            🌟 Todo el cuerpo
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Nivel de Actividad */}
-      <Text style={[styles.label, { marginTop: 14 }]}>Nivel de Actividad Actual:</Text>
+      {/* Nivel de entrenamiento */}
+      <Text style={[styles.label, { marginTop: 14 }]}>Nivel de entrenamiento:</Text>
       <View style={styles.row}>
-        {(['sedentary', 'light', 'moderate', 'active'] as const).map((lv) => {
-          const labels = { sedentary: 'Sedentario', light: 'Ligero', moderate: 'Moderado', active: 'Activo' };
+        {(Object.values(TRAINING_LEVELS)).map((level) => {
           return (
-            <TouchableOpacity key={lv} style={[styles.levelBtn, activityLevel === lv && styles.levelBtnActive]} onPress={() => setActivityLevel(lv)}>
-              <Text style={[styles.levelBtnText, activityLevel === lv && styles.levelBtnTextActive]}>{labels[lv]}</Text>
+            <TouchableOpacity key={level.id} style={[styles.levelBtn, trainingLevel === level.id && styles.levelBtnActive]} onPress={() => setTrainingLevel(level.id)} accessibilityRole="button" accessibilityLabel={`Nivel ${level.label}`}>
+              <Text style={[styles.levelBtnText, trainingLevel === level.id && styles.levelBtnTextActive]}>{level.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -279,15 +213,6 @@ const styles = StyleSheet.create({
   goalBtnActive: { backgroundColor: '#064E3B', borderColor: '#10B981' },
   goalBtnText: { color: '#94A3B8', fontSize: 11, fontWeight: '600' },
   goalBtnTextActive: { color: '#F8FAFC', fontWeight: '700' },
-  focusContainer: { backgroundColor: '#1E293B', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#334155', marginBottom: 12 },
-  zoneRow: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' },
-  zoneChip: { width: '48%', backgroundColor: '#0F172A', borderRadius: 8, paddingVertical: 8, alignItems: 'center', marginBottom: 6, borderWidth: 1, borderColor: '#334155' },
-  zoneChipActive: { backgroundColor: '#064E3B', borderColor: '#10B981' },
-  zoneChipText: { color: '#CBD5E1', fontSize: 11, fontWeight: '600' },
-  fullBodyChip: { width: '100%', backgroundColor: '#0F172A', borderRadius: 8, paddingVertical: 8, alignItems: 'center', marginTop: 4, borderWidth: 1, borderColor: '#334155' },
-  fullBodyChipActive: { backgroundColor: '#064E3B', borderColor: '#10B981' },
-  fullBodyChipText: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
-  fullBodyChipTextActive: { color: '#F8FAFC', fontWeight: '700' },
   levelBtn: { flex: 1, backgroundColor: '#1E293B', borderRadius: 8, paddingVertical: 8, alignItems: 'center', marginRight: 4, borderWidth: 1, borderColor: '#334155' },
   levelBtnActive: { backgroundColor: '#1D4ED8', borderColor: '#3B82F6' },
   levelBtnText: { color: '#94A3B8', fontSize: 10, fontWeight: '600' },

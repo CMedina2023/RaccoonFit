@@ -1,7 +1,7 @@
 import { UserProfile, GeneratedPlan, RecipeItem } from '../types';
-import { selectExercisesForPlan } from './exerciseCatalog';
 import { RECIPES_CATALOG, filterRecipesByDiet } from './catalogs';
 import { generateDailyMealSuggestion } from './mealService';
+import { getTrainingLevelLabel } from './trainingLevel';
 
 /**
  * RecipeProvider — Dependency Inversion Principle (DIP)
@@ -26,7 +26,8 @@ export const defaultCatalogProvider: RecipeProvider = {
  * Genera un plan automatizado para el perfil dado.
  *
  * @param profile         Perfil del usuario
- * @param recipeProvider  Proveedor de recetas (inyectable, default = catálogo estático)
+ * @param recipeProvider    Proveedor de recetas (inyectable, default = catálogo estático)
+ * @param exerciseProvider  Proveedor de ejercicios (inyectable, default = catálogo local)
  */
 export function generateAutomatedPlan(
   profile: UserProfile,
@@ -42,34 +43,18 @@ export function generateAutomatedPlan(
   // Meta realista: 0.5 a 0.75 kg por semana
   const targetLossKg = Number((0.6 * durationWeeks).toFixed(1));
 
-  // Determinar nivel según nivel de actividad del perfil
-  const levelMap: Record<UserProfile['activityLevel'], 1 | 2 | 3> = {
-    sedentary: 1,
-    light: 1,
-    moderate: 2,
-    active: 3,
-  };
-  const levelNumeric = levelMap[profile.activityLevel];
-
-  // Seleccionar ejercicios del nivel correcto (sin mezclar niveles)
-  const selectedExercises = selectExercisesForPlan(profile.preferredRoutineMinutes, levelNumeric);
-
   // DIP: recetas obtenidas con 3 opciones por cada tiempo respetando la preferencia alimentaria
   const pref = profile.dietaryPreference || 'balanced';
   const selectedMeals = generateDailyMealSuggestion(pref, [], recipeProvider, 3);
 
-  const levelLabels: Record<1 | 2 | 3, string> = { 1: 'Principiante', 2: 'Intermedio', 3: 'Avanzado' };
-
   return {
     id: `plan_${Date.now()}`,
-    title: `Plan ${levelLabels[levelNumeric]} · ${profile.preferredRoutineMinutes} min/día`,
+    title: `Plan ${getTrainingLevelLabel(profile)} · ${profile.preferredRoutineMinutes} min/día`,
     startDate,
     durationWeeks,
     endDate,
-    routineDurationMinutes: profile.preferredRoutineMinutes,
     status: 'draft',
     targetLossKg,
-    selectedExercises,
     selectedMeals,
   };
 }

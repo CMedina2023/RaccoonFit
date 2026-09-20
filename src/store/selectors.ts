@@ -7,72 +7,94 @@
  */
 
 import { useAppStore } from './useAppStore';
+import { useShallow } from 'zustand/shallow';
 
 // ─────────────────────────────────────────────
 // Hidratación
 // ─────────────────────────────────────────────
 export const useHydration = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     hydrationHistory: s.hydrationHistory,
     addWaterGlass: s.addWaterGlass,
     removeWaterGlass: s.removeWaterGlass,
-  }));
+  })));
 
 // ─────────────────────────────────────────────
 // Mascota virtual
 // ─────────────────────────────────────────────
 export const usePetState = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     petState: s.petState,
-  }));
+  })));
 
 // ─────────────────────────────────────────────
 // Plan activo y acciones de plan
 // ─────────────────────────────────────────────
 export const usePlanActions = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     currentPlan: s.currentPlan,
     activatePlan: s.activatePlan,
-    removeExerciseFromPlan: s.removeExerciseFromPlan,
     removeRecipeFromPlan: s.removeRecipeFromPlan,
+    shuffleSingleMeal: s.shuffleSingleMeal,
+    shuffleAllMeals: s.shuffleAllMeals,
+    selectMealForDay: s.selectMealForDay,
+    mealsHistory: s.mealsHistory,
     evaluatePlanExpiration: s.evaluatePlanExpiration,
-  }));
+  })));
+
+export const useWorkoutProgress = () =>
+  useAppStore(useShallow((s) => ({
+    workoutHistory: s.workoutHistory,
+    toggleWorkoutCompletion: s.toggleWorkoutCompletion,
+  })));
+
+export const useWorkoutPresentation = () =>
+  useAppStore(useShallow((s) => ({ workoutPresentationHistory: s.workoutPresentationHistory, recordWorkoutPresentation: s.recordWorkoutPresentation })));
+
+export const useWorkoutMainOverrides = () =>
+  useAppStore(useShallow((s) => ({ workoutMainOverrides: s.workoutMainOverrides, saveWorkoutMainOverride: s.saveWorkoutMainOverride })));
+
+export const useWeeklyRoutine = () =>
+  useAppStore(useShallow((s) => ({
+    weeklyRoutine: s.weeklyRoutine,
+    saveWeeklyRoutine: s.saveWeeklyRoutine,
+  })));
 
 // ─────────────────────────────────────────────
 // Pesaje / historial de peso
 // ─────────────────────────────────────────────
 export const useWeighIn = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     weighInHistory: s.weighInHistory,
     addWeeklyWeighIn: s.addWeeklyWeighIn,
-  }));
+  })));
 
 // ─────────────────────────────────────────────
 // Perfil de usuario
 // ─────────────────────────────────────────────
 export const useUserProfile = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     userProfile: s.userProfile,
     saveUserProfile: s.saveUserProfile,
-  }));
+  })));
 
 // ─────────────────────────────────────────────
 // Inicialización y ciclo de vida de la app
 // ─────────────────────────────────────────────
 export const useAppLifecycle = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     isInitialized: s.isInitialized,
     initialize: s.initialize,
     resetAll: s.resetAll,
-  }));
+  })));
 
 // ─────────────────────────────────────────────
 // Feedback visual (toast)
 // ─────────────────────────────────────────────
 export const useToast = () =>
-  useAppStore((s) => ({
+  useAppStore(useShallow((s) => ({
     toastMessage: s.toastMessage,
     toastType: s.toastType,
     showToast: s.showToast,
     clearToast: s.clearToast,
-  }));
+  })));

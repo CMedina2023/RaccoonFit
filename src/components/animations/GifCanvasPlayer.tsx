@@ -1,8 +1,12 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, ActivityIndicator, ImageSourcePropType, Platform } from 'react-native';
+import { MediaLoadCache } from '../../core/exerciseMedia/MediaLoadCache';
+import { createCachedGifSource } from './gifMediaSource';
 
 export interface GifCanvasPlayerProps {
   gifUrl: string;
+  localSource?: ImageSourcePropType;
+  mediaLoadCache: MediaLoadCache;
   isPaused: boolean;
   speed: 1 | 0.5;
   color?: string;
@@ -10,7 +14,6 @@ export interface GifCanvasPlayerProps {
 }
 
 // Registro en memoria de URLs cargadas con éxito para evitar re-triggers del spinner
-const loadedUrlsCache = new Set<string>();
 
 /**
  * GifCanvasPlayer — SRP: Renderizado estable de animaciones GIF con soporte de pausa en Canvas
@@ -22,39 +25,41 @@ const loadedUrlsCache = new Set<string>();
  */
 export const GifCanvasPlayer: React.FC<GifCanvasPlayerProps> = ({
   gifUrl,
+  localSource,
+  mediaLoadCache,
   isPaused,
   speed,
   color = '#10B981',
   onError,
 }) => {
-  const isAlreadyLoaded = loadedUrlsCache.has(gifUrl);
+  const isAlreadyLoaded = mediaLoadCache.has(gifUrl);
   const [isLoading, setIsLoading] = useState(!isAlreadyLoaded);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<any>(null);
+  const containerRef = useRef<View | null>(null);
 
   // Memoizar el objeto source para evitar que react-native-web reinicie la carga
-  const imageSource = useMemo(() => ({ uri: gifUrl }), [gifUrl]);
+  const imageSource = useMemo(() => localSource ?? createCachedGifSource(gifUrl), [gifUrl, localSource]);
 
   // Si cambia la URL del GIF, verificar caché
   useEffect(() => {
-    if (loadedUrlsCache.has(gifUrl)) {
+    if (mediaLoadCache.has(gifUrl)) {
       setIsLoading(false);
     } else {
       setIsLoading(true);
     }
-  }, [gifUrl]);
+  }, [gifUrl, mediaLoadCache]);
 
   // Callbacks estables para evitar re-triggers en el hook de react-native-web
   const handleLoadStart = useCallback(() => {
-    if (!loadedUrlsCache.has(gifUrl)) {
+    if (!mediaLoadCache.has(gifUrl)) {
       setIsLoading(true);
     }
-  }, [gifUrl]);
+  }, [gifUrl, mediaLoadCache]);
 
   const handleLoadEnd = useCallback(() => {
-    loadedUrlsCache.add(gifUrl);
+    mediaLoadCache.markLoaded(gifUrl);
     setIsLoading(false);
-  }, [gifUrl]);
+  }, [gifUrl, mediaLoadCache]);
 
   const handleError = useCallback(() => {
     setIsLoading(false);
@@ -68,7 +73,10 @@ export const GifCanvasPlayer: React.FC<GifCanvasPlayerProps> = ({
       // Buscar el elemento <img> nativo dentro del contenedor o por atributo src
       let imgElement: HTMLImageElement | null = null;
       if (containerRef.current) {
-        imgElement = containerRef.current.querySelector?.('img') || null;
+        const queryableContainer = containerRef.current as unknown as {
+          querySelector?: (selector: string) => HTMLImageElement | null;
+        };
+        imgElement = queryableContainer.querySelector?.('img') || null;
       }
       if (!imgElement && typeof document !== 'undefined') {
         imgElement = document.querySelector(`img[src="${gifUrl}"]`);

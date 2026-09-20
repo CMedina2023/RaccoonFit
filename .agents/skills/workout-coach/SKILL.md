@@ -74,6 +74,18 @@ Cada sesión de entrenamiento se divide en 3 fases obligatorias:
    - Estiramientos estáticos de pecho, espalda, glúteos e isquiotibiales.
    - Normalización de respiración.
 
+### Contrato de duración de la app
+
+Las opciones de tiempo son duración **total de sesión**, nunca número de ejercicios:
+
+| Opción | Calentamiento | Fase principal | Vuelta a la calma | Regla |
+|---|---:|---:|---:|---|
+| 20 min · Express | 3 min | 14 min | 3 min | Excepción express para respetar las tres fases obligatorias. |
+| 30 min · Estándar | 4 min | 22 min | 4 min | Descansos guiados de 45–60 s. |
+| 60 min · Extendida | 5 min | 50 min (2 bloques de 25) | 5 min | Pausa de hidratación entre bloques; no es el valor predeterminado. |
+
+La fase principal de 15–30 minutos se aplica a sesiones estándar. La sesión Express y la Extendida son excepciones explícitas del producto para conservar seguridad y la disponibilidad de 20/30/60 minutos.
+
 ---
 
 ## 4. Clasificación por Niveles de Experiencia en la App
@@ -105,6 +117,30 @@ Esta base indexa los **768 ejercicios realizables exclusivamente con equipo port
 
 ### Reglas de Prescripción con el Catálogo Indexado:
 1. **Consultar antes de crear o alterar ejercicios:** Cuando se requiera un nuevo movimiento para un grupo muscular (ej. deltoides, dorsal, glúteo medio), buscar en `exercisedb_home_catalog.json` por `targetMuscles` o `equipments`.
-2. **Obtención de Animación:** Extraer el campo `gifUrl` correspondiente (`https://static.exercisedb.dev/media/{exerciseId}.gif`) para vincular la animación 3D de alta fidelidad sin requerir código de dibujo manual.
+2. **Obtención de Animación:** Guardar exclusivamente el `exerciseId` como `exerciseDbId`. La URL opcional de GIF se resuelve fuera del catálogo mediante un `ExerciseMediaProvider`; cada ejercicio debe conservar un fallback SVG local. Nunca guardar `gifUrl` ni una URL remota en el catálogo.
 3. **Traducción y Biomecánica Amigable:** Adaptar el nombre al español con lenguaje claro y motivador, manteniendo las instrucciones estructuradas en pasos sencillos.
 
+## 7. Contrato de clasificación y validación del catálogo
+
+Antes de publicar o reclasificar un ejercicio se debe completar esta matriz. La etiqueta de nivel no se deduce solo del implemento:
+
+| Criterio | Principiante (1) | Intermedio (2) | Avanzado (3) |
+|---|---|---|---|
+| Impacto | Sin salto; alternativa estable. | Impacto moderado, controlado. | Saltos/HIIT solo con regresión segura. |
+| Estabilidad | Apoyo de pared, silla o dos pies cuando haga falta. | Control unilateral o de carga moderada. | Combinación de patrones, velocidad o carga alta. |
+| Técnica previa | Ninguna; instrucciones simples. | Domina patrón básico equivalente. | Domina la variante intermedia sin dolor ni compensaciones. |
+| Volumen inicial | 1–2 series, 8–12 repeticiones o 20–40 s. | 2–3 series, 8–15 repeticiones o 30–45 s. | 3–4 series, 8–15 repeticiones o 30–60 s. |
+
+### Validaciones obligatorias por ficha
+
+1. Verificar en `resources/exercisedb_home_catalog.json` que `exerciseDbId`, nombre, equipo, músculo diana e instrucciones describan el mismo movimiento.
+2. Confirmar que `difficulty` y `levelNumeric` coinciden y que el ejercicio cumple la matriz anterior.
+3. Registrar una regresión segura para ejercicios con impacto, carga, equilibrio unilateral o apoyo de suelo.
+4. Elegir un `animationType` biomecánicamente equivalente o crear/registrar un Frame SVG específico antes de entregar; no reutilizar una animación que represente otro movimiento.
+5. Mantener como mínimo ocho ejercicios validados en cada nivel, para que una rutina de 60 minutos pueda completarse sin mezclar niveles. La selección debe rotar entre opciones equivalentes y preservar variedad de patrones: sentadilla, bisagra, empuje, tracción, core y cardio según el nivel.
+
+### Pruebas de integridad requeridas
+
+- Una prueba debe comprobar el mínimo de ejercicios por nivel y la disponibilidad para 20, 30 y 60 minutos.
+- Una prueba de contrato debe validar que cada ID existe en el recurso local y que su equipo es compatible con la categoría declarada.
+- Los ejercicios de alto impacto deben tener una regresión visible en su ficha o estar excluidos de nivel 1.

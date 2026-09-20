@@ -17,6 +17,19 @@ import { BridgeGluteFrame } from './BridgeGluteFrame';
 import { MonsterWalkFrame } from './MonsterWalkFrame';
 import { ShoulderPressFrame } from './ShoulderPressFrame';
 import { DefaultFrame } from './DefaultFrame';
+import { RowBandFrame } from './RowBandFrame';
+import { LateralRaiseFrame } from './LateralRaiseFrame';
+import { StepJackFrame } from './StepJackFrame';
+import { PushupInclineFrame } from './PushupInclineFrame';
+import { ClamshellFrame } from './ClamshellFrame';
+import { RowDumbbellFrame } from './RowDumbbellFrame';
+import { KickbackGluteFrame } from './KickbackGluteFrame';
+import { DeadliftRdlFrame } from './DeadliftRdlFrame';
+import { MountainClimberFrame } from './MountainClimberFrame';
+import { ShadowBoxFrame } from './ShadowBoxFrame';
+import { BandChestPressFrame } from './BandChestPressFrame';
+import { DumbbellShrugFrame } from './DumbbellShrugFrame';
+import { BandVUpFrame } from './BandVUpFrame';
 
 /** Tipo del registro: mapea cada tipo de ejercicio a su componente frame. */
 type AnimationRegistry = Partial<Record<ExerciseAnimationType, React.FC<AnimationFrameProps>>>;
@@ -35,6 +48,19 @@ export const ANIMATION_REGISTRY: AnimationRegistry = {
   bridge_glute: BridgeGluteFrame,
   monster_walk: MonsterWalkFrame,
   shoulder_press: ShoulderPressFrame,
+  row_band: RowBandFrame,
+  lateral_raise: LateralRaiseFrame,
+  step_jack: StepJackFrame,
+  pushup_incline: PushupInclineFrame,
+  clamshell: ClamshellFrame,
+  row_dumbbell: RowDumbbellFrame,
+  kickback_glute: KickbackGluteFrame,
+  deadlift_rdl: DeadliftRdlFrame,
+  mountain_climber: MountainClimberFrame,
+  shadow_box: ShadowBoxFrame,
+  band_chest_press: BandChestPressFrame,
+  dumbbell_shrug: DumbbellShrugFrame,
+  band_vup: BandVUpFrame,
   // ─── Registra aquí nuevos ejercicios ────────────────────────────────────
   // row_band:         RowBandFrame,
   // lateral_raise:    LateralRaiseFrame,

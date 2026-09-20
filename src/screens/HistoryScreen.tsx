@@ -305,7 +305,7 @@ export const HistoryScreen: React.FC<Props> = ({
                 <Text style={{ fontSize: 40, marginBottom: 8 }}>🥗</Text>
                 <Text style={styles.emptyMealsTitle}>Aún no has registrado comidas</Text>
                 <Text style={styles.emptyMealsSub}>
-                  Ve a la pestaña "Mi Plan", revisa las 3 opciones de cada momento y presiona "⚪ Elegir para Hoy" para guardar tu menú.
+                  Ve a la pestaña "Dieta", revisa las 3 opciones de cada momento y presiona "⚪ Elegir para Hoy" para guardar tu menú.
                 </Text>
               </View>
             </View>
