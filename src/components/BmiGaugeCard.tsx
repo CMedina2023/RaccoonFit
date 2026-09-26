@@ -77,11 +77,11 @@ export const BmiGaugeCard: React.FC<Props> = ({ bmiData, currentWeightKg }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#121216',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#26262B',
     marginHorizontal: 16,
     marginVertical: 8,
   },
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   subtitle: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     marginTop: 2,
   },
@@ -121,12 +121,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   bmiUnit: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 14,
     marginLeft: 6,
   },
   weightSnapshot: {
-    color: '#64748B',
+    color: '#71717A',
     fontSize: 13,
     marginLeft: 10,
   },
@@ -141,21 +141,23 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   rangeLabel: {
-    color: '#64748B',
+    color: '#71717A',
     fontSize: 9,
     fontWeight: '600',
   },
   targetWeightBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     padding: 10,
     marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   targetLabel: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     flex: 1,
   },
@@ -165,10 +167,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   adviceText: {
-    color: '#CBD5E1',
+    color: '#D4D4D8',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 10,
-    fontStyle: 'italic',
   },
 });

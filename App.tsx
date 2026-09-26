@@ -235,10 +235,10 @@ export default function App() {
             onShuffleMeal={shuffleSingleMeal}
             onShuffleAllMeals={shuffleAllMeals}
             selectedMealsHistory={mealsHistory}
-            onSelectMealForDay={(mealType, recipe) => {
-              const todayStr = new Date().toISOString().split('T')[0];
-              selectMealForDay(todayStr, mealType, recipe);
+            onSelectMealForDay={(date, mealType, recipe) => {
+              selectMealForDay(date, mealType, recipe);
             }}
+            dietaryPreference={userProfile?.dietaryPreference}
             onRequestNewPlan={() => setActiveTab('perfil')}
           />
         )}
@@ -278,16 +278,24 @@ export default function App() {
           { id: 'historico', icon: '📈', label: 'Histórico' },
           { id: 'ejercicios', icon: '🏋️', label: 'Ejercicios' },
           { id: 'perfil', icon: '👤', label: 'Perfil' },
-        ] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={styles.navItem}
-            onPress={() => setActiveTab(tab.id)}
-          >
-            <Text style={[styles.navIcon, activeTab === tab.id && styles.navIconActive]}>{tab.icon}</Text>
-            <Text style={[styles.navLabel, activeTab === tab.id && styles.navLabelActive]}>{tab.label}</Text>
-          </TouchableOpacity>
-        ))}
+        ] as const).map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={styles.navItem}
+              onPress={() => setActiveTab(tab.id)}
+              activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+            >
+              <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
+                <Text style={[styles.navIcon, isActive && styles.navIconActive]}>{tab.icon}</Text>
+              </View>
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* MODAL DE PESAJE SEMANAL */}
@@ -333,66 +341,87 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#0F172A' },
-  loadingContainer: { flex: 1, backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center' },
+  safeArea: { flex: 1, backgroundColor: '#000000' },
+  loadingContainer: { flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
   loadingEmoji: { fontSize: 60, marginBottom: 12 },
-  loadingText: { color: '#10B981', fontSize: 16, fontWeight: '700' },
+  loadingText: { color: '#F59E0B', fontSize: 18, fontWeight: '700' },
   toast: {
-    position: 'absolute', top: 50, left: 16, right: 16, borderRadius: 14, padding: 12,
+    position: 'absolute', top: 50, left: 16, right: 16, borderRadius: 14, padding: 14,
     borderWidth: 1, zIndex: 999, elevation: 20,
   },
-  toastText: { color: '#F8FAFC', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  toastText: { color: '#F8FAFC', fontSize: 14, fontWeight: '700', textAlign: 'center' },
   mainContent: { flex: 1 },
-  scrollPadding: { paddingBottom: 24 },
+  scrollPadding: { paddingBottom: 28 },
   topHeader: {
-    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4,
+    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  welcomeText: { color: '#F8FAFC', fontSize: 22, fontWeight: '800' },
-  dateSubtext: { color: '#94A3B8', fontSize: 12, textTransform: 'capitalize', marginTop: 2 },
-  changeProfileBtn: { backgroundColor: '#1E293B', borderRadius: 10, padding: 8, borderWidth: 1, borderColor: '#334155' },
-  changeProfileBtnText: { fontSize: 16 },
-  cardWater: { backgroundColor: '#1E293B', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#334155', marginHorizontal: 16, marginBottom: 8, marginTop: 4 },
+  welcomeText: { color: '#F8FAFC', fontSize: 26, fontWeight: '900', letterSpacing: 0.2 },
+  dateSubtext: { color: '#A1A1AA', fontSize: 14, textTransform: 'capitalize', marginTop: 3, fontWeight: '500' },
+  changeProfileBtn: { backgroundColor: '#121216', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#27272A' },
+  changeProfileBtnText: { fontSize: 18 },
+  cardWater: { backgroundColor: '#121216', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#26262B', marginHorizontal: 16, marginBottom: 10, marginTop: 4 },
   waterHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  waterTitle: { color: '#F8FAFC', fontSize: 15, fontWeight: '700' },
-  waterSubtitle: { color: '#06B6D4', fontSize: 11, fontWeight: '600', marginTop: 2 },
+  waterTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '800' },
+  waterSubtitle: { color: '#06B6D4', fontSize: 13, fontWeight: '700', marginTop: 3 },
   waterButtonsRow: { flexDirection: 'row', alignItems: 'center' },
-  waterBtnMinus: { backgroundColor: '#334155', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  waterBtnMinusText: { color: '#F8FAFC', fontSize: 16, fontWeight: '700' },
-  waterBtnPlus: { backgroundColor: '#06B6D4', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
-  waterBtnPlusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  glassesIndicatorRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-  glassDot: { flex: 1, height: 8, borderRadius: 4, backgroundColor: '#334155', marginHorizontal: 1 },
+  waterBtnMinus: { backgroundColor: '#27272A', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+  waterBtnMinusText: { color: '#F8FAFC', fontSize: 18, fontWeight: '800' },
+  waterBtnPlus: { backgroundColor: '#F59E0B', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  waterBtnPlusText: { color: '#000000', fontSize: 14, fontWeight: '900' },
+  glassesIndicatorRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
+  glassDot: { flex: 1, height: 10, borderRadius: 5, backgroundColor: '#27272A', marginHorizontal: 1.5 },
   glassDotFilled: { backgroundColor: '#06B6D4' },
   glassDotBonus: { backgroundColor: '#10B981' },
-  glassDotSeparator: { borderLeftWidth: 2, borderLeftColor: '#475569' },
-  waterLegend: { flexDirection: 'row', marginTop: 8 },
+  glassDotSeparator: { borderLeftWidth: 2, borderLeftColor: '#3F3F46' },
+  waterLegend: { flexDirection: 'row', marginTop: 10 },
   waterLegendItem: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
-  waterLegendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 4 },
-  waterLegendText: { color: '#64748B', fontSize: 9 },
+  waterLegendDot: { width: 9, height: 9, borderRadius: 5, marginRight: 5 },
+  waterLegendText: { color: '#A1A1AA', fontSize: 11, fontWeight: '600' },
   weighInBanner: {
-    backgroundColor: '#1E293B', borderRadius: 18, padding: 14, marginHorizontal: 16,
-    marginTop: 6, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#10B981',
+    backgroundColor: '#121216', borderRadius: 18, padding: 16, marginHorizontal: 16,
+    marginTop: 8, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#27272A',
   },
-  weighInBannerIcon: { fontSize: 26, marginRight: 12 },
+  weighInBannerIcon: { fontSize: 28, marginRight: 14 },
   weighInBannerTextCol: { flex: 1 },
-  weighInBannerTitle: { color: '#10B981', fontWeight: '700', fontSize: 14 },
-  weighInBannerDesc: { color: '#94A3B8', fontSize: 11, marginTop: 2 },
-  bottomNav: { flexDirection: 'row', backgroundColor: '#1E293B', borderTopWidth: 1, borderTopColor: '#334155', paddingVertical: 8, paddingBottom: 12 },
-  navItem: { flex: 1, alignItems: 'center' },
-  navIcon: { fontSize: 20, opacity: 0.5 },
-  navIconActive: { opacity: 1 },
-  navLabel: { color: '#64748B', fontSize: 10, fontWeight: '600', marginTop: 2 },
-  navLabelActive: { color: '#10B981', fontWeight: '700' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1E293B', borderRadius: 20, padding: 20, width: '100%', borderWidth: 1, borderColor: '#334155' },
-  modalTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '700' },
-  modalSubtitle: { color: '#94A3B8', fontSize: 12, marginTop: 4, marginBottom: 16 },
-  modalInputLabel: { color: '#CBD5E1', fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  modalInput: { backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#334155', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: '#F8FAFC', fontSize: 15, marginBottom: 14 },
-  modalButtonsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
-  modalCancelBtn: { paddingHorizontal: 16, paddingVertical: 10, marginRight: 8 },
-  modalCancelText: { color: '#94A3B8', fontWeight: '600' },
-  modalConfirmBtn: { backgroundColor: '#10B981', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10 },
-  modalConfirmText: { color: '#FFFFFF', fontWeight: '700' },
+  weighInBannerTitle: { color: '#F59E0B', fontWeight: '800', fontSize: 17 },
+  weighInBannerDesc: { color: '#A1A1AA', fontSize: 13, marginTop: 3, lineHeight: 18 },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#09090B',
+    borderTopWidth: 1,
+    borderTopColor: '#26262B',
+    paddingVertical: 8,
+    paddingBottom: 14,
+    paddingHorizontal: 6,
+  },
+  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  iconContainer: {
+    width: 48,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 3,
+  },
+  iconContainerActive: {
+    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.45)',
+  },
+  navIcon: { fontSize: 22, opacity: 0.6 },
+  navIconActive: { fontSize: 24, opacity: 1 },
+  navLabel: { color: '#71717A', fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
+  navLabelActive: { color: '#F59E0B', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#121216', borderRadius: 22, padding: 22, width: '100%', borderWidth: 1, borderColor: '#27272A' },
+  modalTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '800' },
+  modalSubtitle: { color: '#A1A1AA', fontSize: 14, marginTop: 4, marginBottom: 18 },
+  modalInputLabel: { color: '#CBD5E1', fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  modalInput: { backgroundColor: '#000000', borderWidth: 1, borderColor: '#27272A', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: '#F8FAFC', fontSize: 16, marginBottom: 16 },
+  modalButtonsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+  modalCancelBtn: { paddingHorizontal: 16, paddingVertical: 12, marginRight: 8 },
+  modalCancelText: { color: '#A1A1AA', fontWeight: '700', fontSize: 15 },
+  modalConfirmBtn: { backgroundColor: '#F59E0B', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
+  modalConfirmText: { color: '#000000', fontWeight: '900', fontSize: 15 },
 });

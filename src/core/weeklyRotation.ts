@@ -1,4 +1,15 @@
 /**
+ * Devuelve la fecha local en formato 'YYYY-MM-DD' respetando la zona horaria del usuario.
+ * Evita el desfase de 'toISOString().split("T")[0]' que convierte a UTC y adelanta el día por la noche.
+ */
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Stable weekly seed for workout selection. It changes only when the calendar
  * week changes, while preserving deterministic results within the same day.
  */

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import Svg, { Path, Line, Circle, Rect, Text as SvgText } from 'react-native-svg';
 import { WeeklyWeighIn, DailyMealsLog } from '../types';
 import { MonthSummary, compareTwoMonths } from '../core/historyAnalytics';
+import { getLocalDateString } from '../core/weeklyRotation';
 
 interface Props {
   weighIns: WeeklyWeighIn[];
@@ -305,7 +306,7 @@ export const HistoryScreen: React.FC<Props> = ({
                 <Text style={{ fontSize: 40, marginBottom: 8 }}>🥗</Text>
                 <Text style={styles.emptyMealsTitle}>Aún no has registrado comidas</Text>
                 <Text style={styles.emptyMealsSub}>
-                  Ve a la pestaña "Dieta", revisa las 3 opciones de cada momento y presiona "⚪ Elegir para Hoy" para guardar tu menú.
+                  Ve a la pestaña "Dieta", revisa las opciones de cada día y momento y presiona "⚪ Elegir" para guardar tu menú en el historial.
                 </Text>
               </View>
             </View>
@@ -326,7 +327,7 @@ export const HistoryScreen: React.FC<Props> = ({
               const totalCalories = meals.reduce((acc, m) => acc + (m.item?.approxCalories || 0), 0);
               const totalProtein = meals.reduce((acc, m) => acc + (m.item?.approxProteinGrams || 0), 0);
 
-              const todayStr = new Date().toISOString().split('T')[0];
+              const todayStr = getLocalDateString();
               const isToday = dateStr === todayStr;
 
               return (
@@ -377,7 +378,7 @@ export const HistoryScreen: React.FC<Props> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
   },
   contentContainer: {
     padding: 16,
@@ -393,17 +394,17 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#A1A1AA',
     marginTop: 2,
   },
   weighInButton: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#121216',
     borderRadius: 16,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#10B981',
+    borderColor: '#F59E0B',
     marginBottom: 16,
   },
   weighInButtonIcon: {
@@ -414,21 +415,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   weighInButtonTitle: {
-    color: '#10B981',
+    color: '#F59E0B',
     fontWeight: '700',
     fontSize: 15,
   },
   weighInButtonSubtitle: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     marginTop: 2,
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#1E293B',
+    backgroundColor: '#121216',
     borderRadius: 12,
     padding: 4,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#26262B',
   },
   tabItem: {
     flex: 1,
@@ -437,23 +440,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabItemActive: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#F59E0B',
   },
   tabText: {
-    color: '#94A3B8',
+    color: '#71717A',
     fontSize: 12,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: '#000000',
+    fontWeight: '800',
   },
   sectionCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#121216',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#26262B',
     marginBottom: 16,
   },
   cardTitle: {
@@ -463,19 +466,21 @@ const styles = StyleSheet.create({
   },
   cardDesc: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#A1A1AA',
     marginTop: 2,
     marginBottom: 12,
   },
   chartWrapper: {
     alignItems: 'center',
     marginVertical: 10,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   emptyText: {
-    color: '#64748B',
+    color: '#71717A',
     textAlign: 'center',
     marginVertical: 20,
     fontSize: 13,
@@ -489,7 +494,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: '#26262B',
   },
   historyDate: {
     color: '#F8FAFC',
@@ -497,7 +502,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   historyBmi: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     marginTop: 2,
   },
@@ -514,13 +519,15 @@ const styles = StyleSheet.create({
   },
   metricBox: {
     width: '48%',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   metricLabel: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
   },
   metricValue: {
@@ -539,14 +546,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
   },
   monthTagText: {
     fontSize: 11,
     fontWeight: '600',
   },
   vsText: {
-    color: '#64748B',
+    color: '#71717A',
     marginHorizontal: 8,
     fontWeight: '700',
     fontSize: 12,
@@ -555,15 +562,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 12,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     padding: 12,
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   compareCol: {
     flex: 1,
   },
   compareSub: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
@@ -574,7 +583,7 @@ const styles = StyleSheet.create({
     marginVertical: 1,
   },
   insightBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     padding: 12,
     marginTop: 12,
@@ -582,6 +591,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderLeftWidth: 3,
     borderLeftColor: '#F59E0B',
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   insightIcon: {
     fontSize: 24,
@@ -589,7 +600,7 @@ const styles = StyleSheet.create({
   },
   insightText: {
     flex: 1,
-    color: '#E2E8F0',
+    color: '#E4E4E7',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -605,7 +616,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   emptyMealsSub: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
@@ -615,7 +626,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: '#26262B',
     paddingBottom: 10,
     marginBottom: 10,
   },
@@ -625,7 +636,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   mealDateSub: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
     marginTop: 2,
   },
@@ -646,9 +657,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mealHistoryItem: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
     borderRadius: 12,
     padding: 10,
+    borderWidth: 1,
+    borderColor: '#27272A',
   },
   mealHistoryTypeRow: {
     flexDirection: 'row',
@@ -662,7 +675,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   mealHistoryNutri: {
-    color: '#94A3B8',
+    color: '#A1A1AA',
     fontSize: 11,
   },
   mealHistoryTitle: {
@@ -672,7 +685,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   mealHistoryIngredients: {
-    color: '#64748B',
+    color: '#71717A',
     fontSize: 11,
   },
 });

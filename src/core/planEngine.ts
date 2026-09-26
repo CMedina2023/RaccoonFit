@@ -2,6 +2,7 @@ import { UserProfile, GeneratedPlan, RecipeItem } from '../types';
 import { RECIPES_CATALOG, filterRecipesByDiet } from './catalogs';
 import { generateDailyMealSuggestion } from './mealService';
 import { getTrainingLevelLabel } from './trainingLevel';
+import { getLocalDateString } from './weeklyRotation';
 
 /**
  * RecipeProvider — Dependency Inversion Principle (DIP)
@@ -35,10 +36,10 @@ export function generateAutomatedPlan(
 ): GeneratedPlan {
   const durationWeeks = 4;
   const today = new Date();
-  const startDate = today.toISOString().split('T')[0];
+  const startDate = getLocalDateString(today);
   const endDateObj = new Date(today);
   endDateObj.setDate(today.getDate() + durationWeeks * 7);
-  const endDate = endDateObj.toISOString().split('T')[0];
+  const endDate = getLocalDateString(endDateObj);
 
   // Meta realista: 0.5 a 0.75 kg por semana
   const targetLossKg = Number((0.6 * durationWeeks).toFixed(1));
@@ -64,7 +65,7 @@ export function checkPlanExpiration(
   currentWeightKg: number,
   startWeightKg: number
 ): { isExpired: boolean; evaluation?: GeneratedPlan['evaluationResult'] } {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
   const isExpired = todayStr >= plan.endDate;
   if (!isExpired) return { isExpired: false };
 

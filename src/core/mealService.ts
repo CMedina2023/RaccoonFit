@@ -1,27 +1,29 @@
 import { RecipeItem, DietaryPreference, DailyMealsLog } from '../types';
 import { filterRecipesByDiet } from './catalogs';
 import { RecipeProvider, defaultCatalogProvider } from './planEngine';
+import { getLocalDateString } from './weeklyRotation';
 
 /**
  * Obtiene los IDs de las recetas seleccionadas en los últimos `days` días anteriores a `targetDate`.
  * Esto implementa la regla de no repetición (cooldown mínimo de 2 días).
  *
  * @param history     Historial de comidas registrado
- * @param targetDate  Fecha de referencia (por defecto hoy 'YYYY-MM-DD')
+ * @param targetDate  Fecha de referencia (por defecto hoy 'YYYY-MM-DD' local)
  * @param days        Días hacia atrás para el cooldown (por defecto 2)
  */
 export function getRecentMealIds(
   history: Record<string, DailyMealsLog>,
-  targetDate: string = new Date().toISOString().split('T')[0],
+  targetDate: string = getLocalDateString(),
   days: number = 2
 ): string[] {
-  const target = new Date(targetDate);
+  const [year, month, day] = targetDate.split('-').map(Number);
+  const target = new Date(year, month - 1, day);
   const excludedIds = new Set<string>();
 
   for (let i = 1; i <= days; i++) {
     const pastDate = new Date(target);
     pastDate.setDate(target.getDate() - i);
-    const dateStr = pastDate.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(pastDate);
 
     const log = history[dateStr];
     if (log) {

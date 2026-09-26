@@ -28,6 +28,7 @@ import { StorageAdapter } from '../core/storage/StorageAdapter';
 import { toggleWorkoutCompletion as toggleWorkoutCompletionInHistory } from '../core/workoutProgressService';
 import { createWeeklyRoutine, hasWeeklyRoutineStructure, isValidWeeklyRoutine, WeeklyRoutine } from '../core/weeklyWorkoutPlanner';
 import { getWorkoutLevel } from '../core/trainingLevel';
+import { getLocalDateString } from '../core/weeklyRotation';
 
 // Re-exportamos las constantes para compatibilidad con imports existentes
 export { MAX_WATER_GLASSES, WATER_GOAL_GLASSES };
@@ -203,7 +204,7 @@ export function createAppStore(storage: StorageAdapter) {
   saveUserProfile: async (profile: UserProfile) => {
     const { showToast } = get();
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateString();
       const bmiResult = calculateBmi(profile.startingWeightKg, profile.heightCm, profile.gender);
       const initialWeighIn: WeeklyWeighIn = {
         id: `w_${Date.now()}`,
@@ -236,7 +237,7 @@ export function createAppStore(storage: StorageAdapter) {
     const { userProfile, weighInHistory, petState, showToast } = get();
     if (!userProfile) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const bmiResult = calculateBmi(weightKg, userProfile.heightCm, userProfile.gender);
     const newWeighIn: WeeklyWeighIn = {
       id: `w_${Date.now()}`, date: todayStr, weightKg, calculatedBmi: bmiResult.bmi, notes,
@@ -253,7 +254,7 @@ export function createAppStore(storage: StorageAdapter) {
   },
 
   addWaterGlass: async () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const { petState, showToast, hydrationHistory } = get();
 
     // SRP: validación delegada a hydrationService
@@ -276,7 +277,7 @@ export function createAppStore(storage: StorageAdapter) {
   },
 
   removeWaterGlass: async () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const current = getTodayGlasses(get().hydrationHistory, todayStr);
     if (current <= 0) return;
     set({ hydrationHistory: { ...get().hydrationHistory, [todayStr]: current - 1 } });
