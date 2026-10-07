@@ -27,6 +27,15 @@ export const usePetState = () =>
     petState: s.petState,
   })));
 
+export const usePetCare = () =>
+  useAppStore(useShallow((s) => ({
+    petCareState: s.petCareState,
+    petAnimationRequest: s.petAnimationRequest,
+    performPetCareAction: s.performPetCareAction,
+    refreshPetCare: s.refreshPetCare,
+    clearPetAnimationRequest: s.clearPetAnimationRequest,
+  })));
+
 // ─────────────────────────────────────────────
 // Plan activo y acciones de plan
 // ─────────────────────────────────────────────

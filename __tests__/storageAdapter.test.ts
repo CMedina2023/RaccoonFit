@@ -89,6 +89,7 @@ describe('Store persistence dependency inversion', () => {
 
     expect(store.getState().weeklyRoutine).toEqual(oneRestRoutine);
     expect(await store.getState().saveWeeklyRoutine(oneRestRoutine)).toBe(false);
-    expect(storage.set).not.toHaveBeenCalled();
+    expect(storage.set).toHaveBeenCalledTimes(1); // Migración aditiva de cuidados, conserva la rutina existente.
+    expect(JSON.parse(storage.set.mock.calls[0][1]).weeklyRoutine).toEqual(oneRestRoutine);
   });
 });

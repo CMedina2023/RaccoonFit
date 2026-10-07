@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   UserProfile,
   FitnessGoal,
@@ -206,7 +206,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
       <StatusBar barStyle="light-content" backgroundColor="#0A0A0C" />
 
       {/* HEADER SUPERIOR CON BOTÓN BACK Y PROGRESS BAR */}
@@ -785,7 +785,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
                 Adaptaremos tus recetas del plan para que se ajusten a tus hábitos y estilo de vida
               </Text>
 
-              <View style={{ marginTop: 16 }}>
+              <View style={styles.dietaryOptions}>
                 {[
                   {
                     id: 'balanced',
@@ -821,7 +821,7 @@ export const AuthScreen: React.FC<Props> = ({ onComplete, existingProfile }) => 
                       activeOpacity={0.8}
                     >
                       <Text style={styles.dietaryCardEmoji}>{item.emoji}</Text>
-                      <View style={{ flex: 1 }}>
+                      <View style={styles.dietaryCardContent}>
                         <Text style={[styles.dietaryCardTitle, active && styles.dietaryCardTitleActive]}>
                           {item.title}
                         </Text>
@@ -1647,7 +1647,12 @@ const styles = StyleSheet.create({
   plateIconText: {
     fontSize: 32,
   },
+  dietaryOptions: {
+    width: '100%',
+    marginTop: 16,
+  },
   dietaryCard: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#18181B',
@@ -1664,6 +1669,10 @@ const styles = StyleSheet.create({
   dietaryCardEmoji: {
     fontSize: 28,
     marginRight: 14,
+  },
+  dietaryCardContent: {
+    flex: 1,
+    minWidth: 0,
   },
   dietaryCardTitle: {
     fontSize: 16,

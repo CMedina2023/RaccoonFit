@@ -191,11 +191,32 @@ export interface VirtualPetState {
   level: number;
   currentXp: number;
   xpToNextLevel: number;
+  /** Campo legado conservado en payloads; la forma de Rocky no refleja métricas corporales. */
   shape: PetShape;
   mood: PetMood;
   unlockedAccessories: string[];
   dialogMessage: string;
 }
+
+export type PetCareNeed = 'hunger' | 'happiness' | 'energy' | 'cleanliness';
+export type PetCareAction = 'feed' | 'play' | 'sleep' | 'clean';
+export type PetCareStatus = 'content' | 'needs_attention' | 'urgent';
+
+export interface PetCareMeters {
+  hunger: number;
+  happiness: number;
+  energy: number;
+  cleanliness: number;
+}
+
+export interface PetCareState extends PetCareMeters {
+  lastUpdatedAtMs: number;
+}
+
+export type PetCareHealthEventType = 'water_glass' | 'meals_complete' | 'workout_complete' | 'weigh_in';
+export type PetAnimationName =
+  | 'idle' | 'walk' | 'eat' | 'drink' | 'play' | 'sleep' | 'clean' | 'celebrate' | 'tired' | 'sad';
+export interface RockyAnimationRequest { animation: PetAnimationName; id: number; }
 
 export interface DailyMealsLog {
   date: string; // YYYY-MM-DD

@@ -52,10 +52,15 @@ function normalized(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
 }
 
+let cachedNormalizedTokens: Array<readonly [string, WorkoutMuscleGroup]> | null = null;
+
 function musclesFromTarget(targetMuscle: string): WorkoutMuscleGroup[] {
+  if (!cachedNormalizedTokens) {
+    cachedNormalizedTokens = MUSCLE_TOKENS.map(([token, muscle]) => [normalized(token), muscle] as const);
+  }
   const target = normalized(targetMuscle);
-  const matches = MUSCLE_TOKENS
-    .map(([token, muscle]) => ({ muscle, position: target.indexOf(normalized(token)) }))
+  const matches = cachedNormalizedTokens
+    .map(([token, muscle]) => ({ muscle, position: target.indexOf(token) }))
     .filter((match) => match.position >= 0)
     .sort((left, right) => left.position - right.position);
   return [...new Set(matches.map((match) => match.muscle))];
@@ -92,11 +97,17 @@ function phasesFor(pattern: MovementPattern, impact: ImpactLevel): readonly Work
   return ['main'];
 }
 
+const classificationCache = new Map<string, ExerciseClassification>();
+
 /**
  * Adaptador temporal del catálogo histórico: convierte etiquetas legibles en datos seguros y tipados.
  * Es deliberadamente la única frontera que interpreta texto; los futuros generadores usarán este resultado.
  */
 export function classifyExercise(exercise: ClassifiableExercise): ExerciseClassification {
+  if (classificationCache.has(exercise.id)) {
+    return classificationCache.get(exercise.id)!;
+  }
+
   const muscles = musclesFromTarget(exercise.targetMuscle);
   const pattern = movementPatternFor(exercise);
   const name = normalized(`${exercise.id} ${exercise.name}`);
@@ -113,7 +124,7 @@ export function classifyExercise(exercise: ClassifiableExercise): ExerciseClassi
     : 'bilateral';
   const [primary, ...secondary] = muscles;
 
-  return {
+  const result: ExerciseClassification = {
     primaryMuscles: primary ? [primary] : pattern === 'cardio' ? ['cardio'] : ['core'],
     secondaryMuscles: secondary,
     movementPattern: pattern,
@@ -128,6 +139,9 @@ export function classifyExercise(exercise: ClassifiableExercise): ExerciseClassi
       ? 'verified_family'
       : 'requires_dedicated_frame',
   };
+
+  classificationCache.set(exercise.id, result);
+  return result;
 }
 
 /** Contrato reutilizable por las pruebas y por la futura generación semanal. */

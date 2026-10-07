@@ -7,6 +7,17 @@ import { belongsToWorkoutFocus, MuscleFocusedWorkout } from './workoutGroupPolic
 
 const EXERCISE_COUNT_BY_DURATION = { 20: 4, 30: 5, 60: 8 } as const;
 
+/**
+ * Mantiene estable la sesión del día: los ejercicios registrados durante la
+ * visualización actual solo deben influir en fechas posteriores.
+ */
+export function getWorkoutPresentationHistoryBeforeDate(
+  presentationHistory: readonly WorkoutPresentationRecord[],
+  date: string
+): WorkoutPresentationRecord[] {
+  return presentationHistory.filter((record) => record.date < date);
+}
+
 function takeUnique(exercises: PlannedExerciseItem[], candidate: PlannedExerciseItem | undefined): void {
   if (candidate && !exercises.some((exercise) => exercise.id === candidate.id)) exercises.push(candidate);
 }

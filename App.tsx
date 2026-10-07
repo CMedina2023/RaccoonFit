@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  SafeAreaView,
+  AppState,
   View,
   Text,
   StyleSheet,
@@ -11,10 +11,12 @@ import {
   StatusBar,
   Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useAppLifecycle,
   useHydration,
   usePetState,
+  usePetCare,
   usePlanActions,
   useToast,
   useUserProfile,
@@ -22,6 +24,8 @@ import {
 } from './src/store/selectors';
 import { useBmiAnalysis } from './src/hooks/useBmiAnalysis';
 import { VirtualPetView } from './src/components/VirtualPetView';
+import { usePetCareSession } from './src/hooks/usePetCareSession';
+import { resolvePetCareStatus } from './src/core/petCareEngine';
 import { BmiGaugeCard } from './src/components/BmiGaugeCard';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { PlanScreen } from './src/screens/PlanScreen';
@@ -33,11 +37,12 @@ import { WATER_GOAL_GLASSES, MAX_WATER_GLASSES } from './src/store/useAppStore';
 import { exerciseMediaCache, exerciseMediaProvider } from './src/app/exerciseMediaComposition';
 
 export default function App() {
-  const { isInitialized, initialize, resetAll } = useAppLifecycle();
+  const { isInitialized, initialize, resetAll: resetAppData } = useAppLifecycle();
   const { userProfile, saveUserProfile } = useUserProfile();
   const { weighInHistory, addWeeklyWeighIn } = useWeighIn();
   const { hydrationHistory, addWaterGlass, removeWaterGlass } = useHydration();
   const { petState } = usePetState();
+  const { petCareState, petAnimationRequest, performPetCareAction, refreshPetCare, clearPetAnimationRequest } = usePetCare();
   const {
     currentPlan,
     mealsHistory,
@@ -48,6 +53,8 @@ export default function App() {
     selectMealForDay,
   } = usePlanActions();
   const { toastMessage, toastType } = useToast();
+  const petCare = usePetCareSession(petAnimationRequest, performPetCareAction, clearPetAnimationRequest);
+  const careStatus = resolvePetCareStatus(petCareState);
 
   const [activeTab, setActiveTab] = useState<'hoy' | 'plan' | 'historico' | 'ejercicios' | 'perfil'>('hoy');
   const [showWeighInModal, setShowWeighInModal] = useState(false);
@@ -62,6 +69,20 @@ export default function App() {
   useEffect(() => {
     initialize();
   }, []);
+
+  useEffect(() => {
+    const refreshIfActive = () => {
+      if (isInitialized && AppState.currentState === 'active') void refreshPetCare();
+    };
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && isInitialized) void refreshPetCare();
+    });
+    const intervalId = setInterval(refreshIfActive, 15 * 60 * 1000);
+    return () => {
+      subscription.remove();
+      clearInterval(intervalId);
+    };
+  }, [isInitialized, refreshPetCare]);
 
   // Animate toast when it appears/disappears
   useEffect(() => {
@@ -116,11 +137,16 @@ export default function App() {
     }
   };
 
+  const handleResetAll = async () => {
+    await resetAppData();
+    petCare.reset();
+  };
+
   const toastBgColor = toastType === 'success' ? '#064E3B' : toastType === 'error' ? '#7F1D1D' : '#1E3A5F';
   const toastBorderColor = toastType === 'success' ? '#10B981' : toastType === 'error' ? '#EF4444' : '#3B82F6';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'right', 'bottom', 'left']}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
 
       {/* TOAST GLOBAL (reemplaza Alert.alert) */}
@@ -151,7 +177,18 @@ export default function App() {
             </View>
 
             {/* Mascota Virtual */}
-            <VirtualPetView pet={petState} onPress={() => {}} />
+            <VirtualPetView
+              name={petState.name}
+              level={petState.level}
+              currentXp={petState.currentXp}
+              xpToNextLevel={petState.xpToNextLevel}
+              dialogMessage={petState.dialogMessage}
+              careState={petCareState}
+              careStatus={careStatus}
+              lastCareAction={petCare.lastAction}
+              animationRequest={petCare.animationRequest}
+              onCareAction={petCare.performAction}
+            />
 
             {/* Widget de Hidratación */}
             <View style={styles.cardWater}>
@@ -263,7 +300,7 @@ export default function App() {
           <ProfileScreen
             profile={userProfile}
             onSaveProfile={saveUserProfile}
-            onResetData={resetAll}
+            onResetData={handleResetAll}
             showResetConfirm={showResetConfirm}
             setShowResetConfirm={setShowResetConfirm}
           />

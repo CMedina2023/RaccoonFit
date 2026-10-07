@@ -7,13 +7,14 @@
  */
 import { create } from 'zustand';
 import {
-  UserProfile, WeeklyWeighIn, DailyHydration, GeneratedPlan, VirtualPetState, RecipeItem, DailyMealsLog, WorkoutCompletion, WorkoutPresentationRecord, WorkoutMainOverride,
+  UserProfile, WeeklyWeighIn, DailyHydration, GeneratedPlan, VirtualPetState, RecipeItem, DailyMealsLog, WorkoutCompletion, WorkoutPresentationRecord, WorkoutMainOverride, PetCareState, PetCareAction, PetCareHealthEventType, RockyAnimationRequest, PetAnimationName,
 } from '../types';
 import { calculateBmi } from '../core/bmiCalculator';
 import { generateAutomatedPlan, checkPlanExpiration } from '../core/planEngine';
 import {
   computePetAfterWeighIn,
   computePetAfterWaterGlass,
+  computePetAfterHealthEvent,
   createInitialPet,
 } from '../core/petService';
 import {
@@ -29,6 +30,8 @@ import { toggleWorkoutCompletion as toggleWorkoutCompletionInHistory } from '../
 import { createWeeklyRoutine, hasWeeklyRoutineStructure, isValidWeeklyRoutine, WeeklyRoutine } from '../core/weeklyWorkoutPlanner';
 import { getWorkoutLevel } from '../core/trainingLevel';
 import { getLocalDateString } from '../core/weeklyRotation';
+import { applyPetCareAction, advancePetCare, createInitialPetCare } from '../core/petCareEngine';
+import { applyPetCareHealthEvent, PET_CARE_ACTION_ANIMATIONS, PET_CARE_EVENT_ANIMATIONS } from '../core/petCareIntegration';
 
 // Re-exportamos las constantes para compatibilidad con imports existentes
 export { MAX_WATER_GLASSES, WATER_GOAL_GLASSES };
@@ -48,6 +51,9 @@ interface AppState {
   weeklyRoutine: WeeklyRoutine | null;
   currentPlan: GeneratedPlan | null;
   petState: VirtualPetState;
+  petCareState: PetCareState;
+  petCareEventIds: string[];
+  petAnimationRequest: RockyAnimationRequest | null;
 
   // Feedback visual (sustituye Alert.alert)
   toastMessage: string | null;
@@ -71,6 +77,9 @@ interface AppState {
   resetAll: () => Promise<void>;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   clearToast: () => void;
+  performPetCareAction: (action: PetCareAction) => Promise<void>;
+  refreshPetCare: () => Promise<void>;
+  clearPetAnimationRequest: (id: number) => void;
 }
 
 const DEFAULT_PET: VirtualPetState = {
@@ -83,6 +92,37 @@ const DEFAULT_PET: VirtualPetState = {
   unlockedAccessories: ['bandana_basica'],
   dialogMessage: '¡Hola! Soy Rocky. Juntos vamos a ponernos en forma paso a pasito. 🦝',
 };
+
+function isValidPetCareState(value: unknown): value is PetCareState {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<PetCareState>;
+  return ['hunger', 'happiness', 'energy', 'cleanliness', 'lastUpdatedAtMs'].every(
+    (key) => typeof candidate[key as keyof PetCareState] === 'number' && Number.isFinite(candidate[key as keyof PetCareState])
+  );
+}
+
+function migratePetCareEventIds(payload: Record<string, unknown>): string[] {
+  const eventIds: string[] = [];
+  const hydrationHistory = payload.hydrationHistory;
+  if (hydrationHistory && typeof hydrationHistory === 'object') {
+    Object.entries(hydrationHistory as Record<string, unknown>).forEach(([date, rawCount]) => {
+      if (typeof rawCount !== 'number' || !Number.isFinite(rawCount)) return;
+      const glassCount = Math.max(0, Math.min(MAX_WATER_GLASSES, Math.floor(rawCount)));
+      for (let ordinal = 1; ordinal <= glassCount; ordinal += 1) {
+        eventIds.push(`water_glass:${date}:${ordinal}`);
+      }
+    });
+  }
+  const weighInHistory = payload.weighInHistory;
+  if (Array.isArray(weighInHistory)) {
+    weighInHistory.forEach((entry: unknown) => {
+      if (entry && typeof entry === 'object' && typeof (entry as WeeklyWeighIn).date === 'string') {
+        eventIds.push(`weigh_in:${(entry as WeeklyWeighIn).date}`);
+      }
+    });
+  }
+  return eventIds;
+}
 
 // ─────────────────────────────────────────────
 // Función de persistencia — DIP: recibe adapter como parámetro
@@ -103,6 +143,9 @@ async function persistState(
       weeklyRoutine: state.weeklyRoutine,
       currentPlan: state.currentPlan,
       petState: state.petState,
+      petCareVersion: 1,
+      petCareState: state.petCareState,
+      petCareEventIds: state.petCareEventIds,
     };
     await storage.set(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
@@ -114,6 +157,11 @@ async function persistState(
 // Store — solo orquesta: llama servicios, actualiza estado, persiste
 // ─────────────────────────────────────────────
 export function createAppStore(storage: StorageAdapter) {
+  let nextAnimationId = 0;
+  const createAnimationRequest = (animation: PetAnimationName): RockyAnimationRequest => ({
+    animation,
+    id: ++nextAnimationId,
+  });
   return create<AppState>((set, get) => ({
   isInitialized: false,
   userProfile: null,
@@ -126,6 +174,9 @@ export function createAppStore(storage: StorageAdapter) {
   weeklyRoutine: null,
   currentPlan: null,
   petState: DEFAULT_PET,
+  petCareState: createInitialPetCare(Date.now()),
+  petCareEventIds: [],
+  petAnimationRequest: null,
   toastMessage: null,
   toastType: null,
 
@@ -179,6 +230,17 @@ export function createAppStore(storage: StorageAdapter) {
           plan = nutritionPlan as GeneratedPlan;
         }
 
+        const nowMs = Date.now();
+        const hasPetCareSchema = parsed.petCareVersion === 1 &&
+          isValidPetCareState(parsed.petCareState) && Array.isArray(parsed.petCareEventIds);
+        const storedCare = hasPetCareSchema
+          ? parsed.petCareState
+          : createInitialPetCare(nowMs);
+        const petCareState = advancePetCare(storedCare, nowMs);
+        const petCareEventIds = hasPetCareSchema
+          ? parsed.petCareEventIds.filter((id: unknown): id is string => typeof id === 'string')
+          : migratePetCareEventIds(parsed);
+
         set({
           isInitialized: true,
           userProfile: parsed.userProfile || null,
@@ -191,7 +253,11 @@ export function createAppStore(storage: StorageAdapter) {
           weeklyRoutine: parsed.weeklyRoutine && hasWeeklyRoutineStructure({ days: parsed.weeklyRoutine.days.map((day: { focus: string; label: string }) => ({ ...day, focus: day.focus === 'push' ? 'chest_back' : day.focus === 'pull' ? 'biceps_triceps' : day.focus, label: day.label === 'Empuje y core' ? 'Pecho y espalda' : day.label === 'Tracción y core' ? 'Bíceps y tríceps' : day.label })) } as WeeklyRoutine) ? { days: parsed.weeklyRoutine.days.map((day: { focus: string; label: string }) => ({ ...day, focus: day.focus === 'push' ? 'chest_back' : day.focus === 'pull' ? 'biceps_triceps' : day.focus, label: day.label === 'Empuje y core' ? 'Pecho y espalda' : day.label === 'Tracción y core' ? 'Bíceps y tríceps' : day.label })) } as WeeklyRoutine : createWeeklyRoutine(parsed.userProfile ? getWorkoutLevel(parsed.userProfile) : 1),
           currentPlan: plan,
           petState: parsed.petState || DEFAULT_PET,
+          petCareState,
+          petCareEventIds,
+          petAnimationRequest: null,
         });
+        if (!hasPetCareSchema) await persistState(get(), storage);
         get().evaluatePlanExpiration();
         return;
       }
@@ -224,6 +290,9 @@ export function createAppStore(storage: StorageAdapter) {
         weighInHistory: [initialWeighIn],
         currentPlan: autoPlan,
         petState: newPet,
+        petCareState: createInitialPetCare(Date.now()),
+        petCareEventIds: [],
+        petAnimationRequest: null,
       });
 
       await persistState(get(), storage);
@@ -234,7 +303,7 @@ export function createAppStore(storage: StorageAdapter) {
   },
 
   addWeeklyWeighIn: async (weightKg: number, notes?: string) => {
-    const { userProfile, weighInHistory, petState, showToast } = get();
+    const { userProfile, weighInHistory, petState, petCareState, petCareEventIds, showToast } = get();
     if (!userProfile) return;
 
     const todayStr = getLocalDateString();
@@ -245,17 +314,29 @@ export function createAppStore(storage: StorageAdapter) {
 
     const updatedHistory = [newWeighIn, ...weighInHistory.filter((w) => w.date !== todayStr)];
 
-    // SRP: lógica de mascota delegada a petService
-    const updatedPet = computePetAfterWeighIn(petState, userProfile.startingWeightKg, weightKg);
+    const eventId = `weigh_in:${todayStr}`;
+    const shouldReward = !petCareEventIds.includes(eventId);
+    const updatedPet = shouldReward
+      ? computePetAfterWeighIn(petState)
+      : petState;
+    const updatedCare = shouldReward
+      ? applyPetCareHealthEvent(petCareState, 'weigh_in', Date.now())
+      : advancePetCare(petCareState, Date.now());
 
-    set({ weighInHistory: updatedHistory, petState: updatedPet });
+    set({
+      weighInHistory: updatedHistory,
+      petState: updatedPet,
+      petCareState: updatedCare,
+      petCareEventIds: shouldReward ? [...petCareEventIds, eventId] : petCareEventIds,
+      petAnimationRequest: createAnimationRequest(PET_CARE_EVENT_ANIMATIONS.weigh_in),
+    });
     await persistState(get(), storage);
     showToast('⚖️ Pesaje semanal registrado correctamente', 'success');
   },
 
   addWaterGlass: async () => {
     const todayStr = getLocalDateString();
-    const { petState, showToast, hydrationHistory } = get();
+    const { petState, petCareState, petCareEventIds, showToast, hydrationHistory } = get();
 
     // SRP: validación delegada a hydrationService
     const current = getTodayGlasses(hydrationHistory, todayStr);
@@ -266,12 +347,21 @@ export function createAppStore(storage: StorageAdapter) {
 
     const updatedGlasses = current + 1;
 
-    // SRP: lógica de mascota delegada a petService
-    const updatedPet = computePetAfterWaterGlass(petState, updatedGlasses, WATER_GOAL_GLASSES);
+    const eventId = `water_glass:${todayStr}:${updatedGlasses}`;
+    const shouldReward = !petCareEventIds.includes(eventId);
+    const updatedPet = shouldReward
+      ? computePetAfterWaterGlass(petState, updatedGlasses, WATER_GOAL_GLASSES)
+      : petState;
+    const updatedCare = shouldReward
+      ? applyPetCareHealthEvent(petCareState, 'water_glass', Date.now())
+      : advancePetCare(petCareState, Date.now());
 
     set({
       hydrationHistory: { ...hydrationHistory, [todayStr]: updatedGlasses },
       petState: updatedPet,
+      petCareState: updatedCare,
+      petCareEventIds: shouldReward ? [...petCareEventIds, eventId] : petCareEventIds,
+      petAnimationRequest: createAnimationRequest(PET_CARE_EVENT_ANIMATIONS.water_glass),
     });
     await persistState(get(), storage);
   },
@@ -280,7 +370,8 @@ export function createAppStore(storage: StorageAdapter) {
     const todayStr = getLocalDateString();
     const current = getTodayGlasses(get().hydrationHistory, todayStr);
     if (current <= 0) return;
-    set({ hydrationHistory: { ...get().hydrationHistory, [todayStr]: current - 1 } });
+    const state = get();
+    set({ hydrationHistory: { ...state.hydrationHistory, [todayStr]: current - 1 }, petCareState: advancePetCare(state.petCareState, Date.now()) });
     await persistState(get(), storage);
   },
 
@@ -360,7 +451,7 @@ export function createAppStore(storage: StorageAdapter) {
   },
 
   selectMealForDay: async (date: string, mealType: keyof GeneratedPlan['selectedMeals'], recipe: RecipeItem) => {
-    const { mealsHistory, showToast } = get();
+    const { mealsHistory, petCareState, petCareEventIds, petState, showToast } = get();
     const currentDayLog = mealsHistory[date] || { date };
     const isAlreadySelected = currentDayLog[mealType]?.id === recipe.id;
 
@@ -383,14 +474,44 @@ export function createAppStore(storage: StorageAdapter) {
       [date]: updatedDayLog,
     };
 
-    set({ mealsHistory: updatedHistory });
+    const isCompleteDay = Boolean(updatedDayLog.breakfast && updatedDayLog.lunch && updatedDayLog.dinner && updatedDayLog.snack);
+    const eventId = `meals_complete:${date}`;
+    const shouldReward = isCompleteDay && !petCareEventIds.includes(eventId);
+    const updatedPet = shouldReward ? computePetAfterHealthEvent(petState, 'meals_complete') : petState;
+    const updatedCare = shouldReward
+      ? applyPetCareHealthEvent(petCareState, 'meals_complete', Date.now())
+      : advancePetCare(petCareState, Date.now());
+
+    set({
+      mealsHistory: updatedHistory,
+      petState: updatedPet,
+      petCareState: updatedCare,
+      petCareEventIds: shouldReward ? [...petCareEventIds, eventId] : petCareEventIds,
+      petAnimationRequest: shouldReward
+        ? createAnimationRequest(PET_CARE_EVENT_ANIMATIONS.meals_complete)
+        : get().petAnimationRequest,
+    });
     await persistState(get(), storage);
   },
 
   toggleWorkoutCompletion: async (completion: WorkoutCompletion) => {
-    const { workoutHistory, showToast } = get();
+    const { workoutHistory, petCareState, petCareEventIds, petState, showToast } = get();
     const wasCompleted = Boolean(workoutHistory[completion.date]);
-    set({ workoutHistory: toggleWorkoutCompletionInHistory(workoutHistory, completion) });
+    const eventId = `workout_complete:${completion.date}`;
+    const shouldReward = !wasCompleted && !petCareEventIds.includes(eventId);
+    const updatedPet = shouldReward ? computePetAfterHealthEvent(petState, 'workout_complete') : petState;
+    const updatedCare = shouldReward
+      ? applyPetCareHealthEvent(petCareState, 'workout_complete', Date.now())
+      : advancePetCare(petCareState, Date.now());
+    set({
+      workoutHistory: toggleWorkoutCompletionInHistory(workoutHistory, completion),
+      petState: updatedPet,
+      petCareState: updatedCare,
+      petCareEventIds: shouldReward ? [...petCareEventIds, eventId] : petCareEventIds,
+      petAnimationRequest: !wasCompleted
+        ? createAnimationRequest(PET_CARE_EVENT_ANIMATIONS.workout_complete)
+        : get().petAnimationRequest,
+    });
     await persistState(get(), storage);
     showToast(wasCompleted ? 'Rutina marcada como pendiente' : '¡Rutina completada! Buen trabajo.', wasCompleted ? 'info' : 'success');
   },
@@ -434,9 +555,29 @@ export function createAppStore(storage: StorageAdapter) {
       await storage.remove(STORAGE_KEY);
     set({
       userProfile: null, weighInHistory: [], hydrationHistory: {}, mealsHistory: {}, workoutHistory: {}, workoutPresentationHistory: [], workoutMainOverrides: {}, weeklyRoutine: null,
-      currentPlan: null, petState: DEFAULT_PET, toastMessage: null, toastType: null,
+      currentPlan: null, petState: DEFAULT_PET, petCareState: createInitialPetCare(Date.now()), petCareEventIds: [], petAnimationRequest: null, toastMessage: null, toastType: null,
     });
     get().showToast('🔄 Datos restablecidos correctamente', 'info');
+  },
+
+  performPetCareAction: async (action) => {
+    const state = get();
+    set({
+      petCareState: applyPetCareAction(state.petCareState, action, Date.now()),
+      petAnimationRequest: createAnimationRequest(PET_CARE_ACTION_ANIMATIONS[action]),
+    });
+    await persistState(get(), storage);
+  },
+
+  refreshPetCare: async () => {
+    const current = get().petCareState;
+    const advanced = advancePetCare(current, Date.now());
+    set({ petCareState: advanced });
+    if (advanced.lastUpdatedAtMs !== current.lastUpdatedAtMs) await persistState(get(), storage);
+  },
+
+  clearPetAnimationRequest: (id) => {
+    if (get().petAnimationRequest?.id === id) set({ petAnimationRequest: null });
   },
   }));
 }

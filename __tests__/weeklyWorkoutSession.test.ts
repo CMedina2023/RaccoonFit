@@ -1,6 +1,6 @@
 import { EXERCISES_CATALOG } from '../src/core/exerciseCatalog';
 import { classifyExercise } from '../src/core/exerciseTaxonomy';
-import { buildWeeklyWorkoutSession } from '../src/core/weeklyWorkoutSession';
+import { buildWeeklyWorkoutSession, getWorkoutPresentationHistoryBeforeDate } from '../src/core/weeklyWorkoutSession';
 import { getWeeklyRotationSeed } from '../src/core/weeklyRotation';
 
 const EXPECTED_PRIMARY_MUSCLES = {
@@ -44,6 +44,15 @@ describe('Sesiones semanales por enfoque', () => {
     const session = buildWeeklyWorkoutSession(20, 2, 'biceps_triceps', EXERCISES_CATALOG, 0, recent);
 
     expect(session.phases[1].exercises.some((exercise) => !recent.some((record) => record.exerciseId === exercise.id))).toBe(true);
+  });
+  it('evita que los registros del día actual regeneren la sesión visible', () => {
+    const history = [
+      { date: '2026-09-29', focus: 'full_body' as const, exerciseId: 'previous', variantLabel: 'Base', weekSeed: 0 },
+      { date: '2026-09-30', focus: 'full_body' as const, exerciseId: 'current', variantLabel: 'Base', weekSeed: 0 },
+      { date: '2026-10-01', focus: 'full_body' as const, exerciseId: 'future', variantLabel: 'Base', weekSeed: 0 },
+    ];
+
+    expect(getWorkoutPresentationHistoryBeforeDate(history, '2026-09-30')).toEqual([history[0]]);
   });
   it('cambia la rotación del mismo día al iniciar una semana nueva', () => {
     const mondayOne = new Date(2026, 8, 14);

@@ -33,7 +33,7 @@ Dieta/
 │   ├── store/
 │   │   └── useAppStore.ts           # Store global Zustand con persistencia offline
 │   ├── components/
-│   │   ├── VirtualPetView.tsx       # Mapache Fitness interactivo SVG morfológico
+│   │   ├── VirtualPetView.tsx       # Interfaz Tamagotchi pixel art de Rocky
 │   │   └── BmiGaugeCard.tsx         # Medidor visual de IMC con rangos saludables
 │   └── screens/
 │       ├── HistoryScreen.tsx        # Histórico semanal, mensual y comparador Mes A vs Mes B
@@ -49,15 +49,16 @@ Dieta/
 
 ---
 
-## 2. 🦝 Mascota Virtual Interactiva: Rocky el Mapache
+## 2. 🦝 Mascota Virtual Tamagotchi: Rocky el Mapache
 
-El avatar SVG de Rocky se adapta en tiempo real a las métricas del usuario:
-- **Silueta Adaptativa:** El radio corporal y anchura de vientre se ajustan matemáticamente (`chubby` -> `balanced` -> `fit` -> `athletic`) según el diferencial de peso perdido entre el peso inicial y el actual.
-- **Sistema de Experiencia (XP):**
-  - Registrar vaso de agua (250 ml): `+10 XP`
-  - Pesaje semanal completado: `+100 XP`
-  - Subida de nivel al alcanzar el umbral de XP.
-- **Diálogos de Apoyo:** Mensajes empáticos contextuales que fomentan la constancia sin culpabilizar al usuario.
+Rocky aparece en el dashboard como un sprite de pixel art que patrulla una ilustración unificada de su habitación nocturna. El fondo y sus muebles comparten paleta, escala de píxel, contorno e iluminación con la mascota; no se construyen con figuras básicas de interfaz. Debajo del diálogo se muestran cuatro burbujas compactas con porcentaje; cada una ejecuta directamente alimentar, jugar, descansar o limpiar. Cada animación utiliza cuadros PNG locales y el estado de cuidado se guarda offline mediante `StorageAdapter`.
+
+- **Necesidades:** hambre, ánimo, energía y limpieza; el deterioro se limita por tiempo y conserva un piso no punitivo.
+- **Hábitos:** agua, comidas completas, rutina y pesaje entregan XP y efectos lúdicos con idempotencia por vaso o fecha.
+- **Accesibilidad:** cada burbuja anuncia necesidad, porcentaje y acción; los targets táctiles miden 48 dp o más y se respeta el movimiento reducido.
+- **Presentación:** `PetCareBubbles` organiza los controles y `PetCareBubble` representa una necesidad mediante el registro declarativo de `petCarePresentation.ts`.
+- **Privacidad y bienestar:** los sprites no alteran la silueta por el peso. Registrar un pesaje celebra el hábito y no comunica kilos perdidos mediante Rocky.
+- **Assets:** animaciones en `assets/rocky/pixel/sprites/` y habitación en `assets/rocky/pixel/habitat/rocky-room-v2.png`; los sprites 3D heredados se retiraron al completar TAM-001-R6.
 
 ---
 
